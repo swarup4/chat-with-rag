@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify
 from app import rag
+from app.schemas import QARequest, QAResponse
 
 app = Flask(__name__)
 
@@ -21,10 +22,11 @@ def list_documents():
 @app.route("/qa", methods=["POST"])
 def qa():
     data = request.json
-    question = data.get("question")
-    document_ids = data.get("document_ids")
-    answer = rag.answer_question(question, document_ids)
-    return jsonify({"answer": answer})
+    qa_request = QARequest.model_validate(data)
+    answer = rag.answer_question(qa_request.question, qa_request.document_ids)
+    response = QAResponse(answer=answer)
+    return jsonify(response.model_dump())
+
 
 if __name__ == "__main__":
     app.run(debug=True)
