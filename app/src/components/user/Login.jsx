@@ -1,15 +1,49 @@
 import React from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { useFormik } from 'formik'
+import { object, string } from 'yup'
+import axios from 'axios'
+import { HOST_URL } from '../../constants'
+
+const initialValues = {
+    email: '',
+    password: ''
+}
+const schema = object({
+    email: string().email('Email should be valid').required('Enter your email'),
+    password: string().required('Enter your password')
+})
 
 export default function Login() {
-  return (
-    <div className='full-height'>
+    const navigate = useNavigate();
+    // const [isLoading, setIsLoading] = useState(false);
+
+    const { values, errors, handleBlur, handleChange, handleSubmit, touched } = useFormik({
+        initialValues: initialValues,
+        validationSchema: schema,
+        onSubmit: (values, action) => {
+            console.log(values);
+            login(values);
+        }
+    });
+
+    function login(data) {
+        const url = `${HOST_URL}user/login`
+        axios.post(url, data).then(res => {
+            // console.log(res.data);
+            sessionStorage.auth = res.data.token;
+            const location = sessionStorage.url;
+            navigate(location);
+        }).catch(err => {
+            console.log(err)
+        })
+    }
+
+
+    return (
+        <div className='full-height'>
             <div className="flex min-h-full flex-1 flex-col justify-center px-6 pt-0 py-12 lg:px-8">
                 <div className="sm:mx-auto sm:w-full sm:max-w-sm">
-                    <img
-                        className="mx-auto h-10 w-auto"
-                        src="https://tailwindui.com/img/logos/mark.svg?color=indigo&shade=600"
-                        alt="Your Company"
-                    />
                     <h2 className="mt-10 text-center text-2xl font-bold leading-9 tracking-tight text-gray-900">
                         Sign in to your account
                     </h2>
@@ -74,5 +108,5 @@ export default function Login() {
                 </div>
             </div>
         </div>
-  )
+    )
 }
