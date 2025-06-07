@@ -1,0 +1,14 @@
+flask
+pymongo
+langchain
+python-dotenv
+pydantic
+pytest
+requests
+langchain-community
+langchain-huggingface
+langchain-mongodb
+langchain-core
+langchain-embeddings
+docx2txt
+pypdf
