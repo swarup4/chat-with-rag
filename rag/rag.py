@@ -2,9 +2,9 @@ import os
 from dotenv import load_dotenv
 from pymongo import MongoClient
 from langchain_mongodb import MongoDBAtlasVectorSearch
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_core.prompts import PromptTemplate
-from langchain.document_loaders import PyPDFLoader, DirectoryLoader
+from langchain.document_loaders import PyPDFLoader, DirectoryLoader, PyPDFDirectoryLoader
 from langchain_community.embeddings.fastembed import FastEmbedEmbeddings
 from langchain_huggingface import ChatHuggingFace, HuggingFaceEndpoint
 
@@ -20,10 +20,25 @@ llm = HuggingFaceEndpoint(
     huggingfacehub_api_token=HUGGINGFACEHUB_ACCESS_TOKEN,
 )
 
-loader = DirectoryLoader(
+# loader = DirectoryLoader(
+#     path='./Trip/Thailand',
+#     glob='*.pdf',
+#     loader_cls=PyPDFLoader
+# )
+
+loader = PyPDFDirectoryLoader(
     path='./Trip/Thailand',
-    glob='*.pdf',
-    loader_cls=PyPDFLoader
+    glob = "*.pdf",
+    silent_errors = False,
+    load_hidden = False,
+    recursive = False,
+    extract_images = False,
+    password = None,
+    mode = "page",
+    images_to_text = None,
+    headers = None,
+    extraction_mode = "plain",
+    # extraction_kwargs = None,
 )
 
 data = loader.load()
@@ -32,10 +47,11 @@ text = "\n\n".join(chunk.page_content for chunk in data)
 
 ### Create Text convert into Chunks
 splitter = RecursiveCharacterTextSplitter(
-    separators=["\n\n","\n", ". ", " "],
-    chunk_size = 500,
-    chunk_overlap = 50,
-    is_separator_regex=False
+    is_separator_regex=True, 
+    length_function=len, 
+    separators=["\n\n", "\n", " ", ""],
+    chunk_size=500, 
+    chunk_overlap=50
 )
 chunk = splitter.create_documents(texts=[text])
 

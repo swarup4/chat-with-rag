@@ -1,8 +1,7 @@
 import os
 from bson import ObjectId
 from dotenv import load_dotenv
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 from app.db import documents_collection, embeddings_collection
 from app.embeddings import embed_texts
 from app.utils import load_pdf, save_temp_pdf
@@ -14,7 +13,11 @@ def ingest_document(file):
     path = save_temp_pdf(file)
     docs = load_pdf(path)
     text_splitter = RecursiveCharacterTextSplitter(
-        chunk_size=500, chunk_overlap=50
+        is_separator_regex=True, 
+        length_function=len, 
+        separators=["\n\n", "\n", " ", ""],
+        chunk_size=500, 
+        chunk_overlap=50
     )
     chunks = text_splitter.create_documents([d.page_content for d in docs])
     texts = [c.page_content for c in chunks]
