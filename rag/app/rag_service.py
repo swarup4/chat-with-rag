@@ -19,25 +19,18 @@ class RAGService:
         self.embedding = EmbeddingModel()
         self.llm_repo_id = "HuggingFaceH4/zephyr-7b-beta"
         self.vector_index_name = "vector-stores-index"
-        self.db_name = "llm"
-        self.collection_name = "vector"
-        self.mongo_uri = os.getenv("MONGODB_ATLAS_CLUSTER_URI")
         self.hf_token = os.getenv("HUGGINGFACEHUB_ACCESS_TOKEN")
         self.vector_store = None
         self._init_vector_store()
 
     def _init_vector_store(self):
-        
-        client = MongoClient(self.mongo_uri)
-        collection = client[self.db_name][self.collection_name]
         self.vector_store = MongoDBAtlasVectorSearch(
-            collection=collection,
+            collection=embeddings_collection,
             embedding=FastEmbedEmbeddings(),
             index_name=self.vector_index_name,
             relevance_score_fn="cosine",
         )
         self.vector_store.create_vector_search_index(dimensions=384)
-        
 
     def ingest_document(self, file):
         path = save_temp_pdf(file)
@@ -57,7 +50,6 @@ class RAGService:
         vectors = self.embedding.embed_texts(texts)
         doc = documents_collection.insert_one({"name": file.filename})
         doc_id = str(doc.inserted_id)
-        print("Doc ID ===>>> ", doc_id)
 
         for text, vector in zip(texts, vectors):
             embeddings_collection.insert_one({
@@ -69,11 +61,6 @@ class RAGService:
         # self.vector_store.add_documents(chunks)
         return doc_id
 
-    # def get_documents(self):
-    #     docs = []
-    #     for doc in documents_collection.find({}):
-    #         docs.append({"id": str(doc["_id"]), "name": doc["name"]})
-    #     return docs
 
     def get_chain(self):
         memory = ConversationBufferMemory(
