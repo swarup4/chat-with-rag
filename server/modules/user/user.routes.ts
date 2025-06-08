@@ -1,9 +1,14 @@
 import { Router } from 'express';
-import { UserController } from './user.controller';
+import { UserController } from './user.controller.js';
 
-const router = Router();
-const controller = new UserController();
+class UserRoutes {
+  public router = Router();
+  private controller = new UserController();
 
-router.get('/', controller.getUsers.bind(controller));
+  constructor() {
+    this.router.get('/', this.controller.getUsers.bind(this.controller));
+    // Add more user routes here as needed
+  }
+}
 
-export default router;
+export default new UserRoutes().router;

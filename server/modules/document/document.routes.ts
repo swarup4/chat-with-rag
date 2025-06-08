@@ -1,9 +1,14 @@
 import { Router } from 'express';
-import { DocumentController } from './document.controller';
+import { DocumentController } from './document.controller.js';
 
-const router = Router();
-const controller = new DocumentController();
+class DocumentRoutes {
+  public router = Router();
+  private controller = new DocumentController();
 
-router.post('/', controller.createDocument.bind(controller));
+  constructor() {
+    this.router.post('/', this.controller.createDocument.bind(this.controller));
+    // Add more document routes here as needed
+  }
+}
 
-export default router;
+export default new DocumentRoutes().router;

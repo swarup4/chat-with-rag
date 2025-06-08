@@ -1,9 +1,14 @@
 import { Router } from 'express';
-import { IngestionController } from './ingestion.controller';
+import { IngestionController } from './ingestion.controller.js';
 
-const router = Router();
-const controller = new IngestionController();
+class IngestionRoutes {
+  public router = Router();
+  private controller = new IngestionController();
 
-router.post('/trigger', controller.triggerIngestion.bind(controller));
+  constructor() {
+    this.router.post('/trigger', this.controller.triggerIngestion.bind(this.controller));
+    // Add more ingestion routes here as needed
+  }
+}
 
-export default router;
+export default new IngestionRoutes().router;

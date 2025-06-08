@@ -1,11 +1,16 @@
 import { Router } from 'express';
 import { AuthController } from './auth.controller';
 
-const router = Router();
-const controller = new AuthController();
+class AuthRoutes {
+  public router = Router();
+  private controller = new AuthController();
 
-router.post('/register', controller.register.bind(controller));
-router.post('/login', controller.login.bind(controller));
-router.post('/logout', controller.logout.bind(controller));
+  constructor() {
+    this.router.post('/register', this.controller.register.bind(this.controller));
+    this.router.post('/login', this.controller.login.bind(this.controller));
+    this.router.post('/logout', this.controller.logout.bind(this.controller));
+    // Add more auth routes here as needed
+  }
+}
 
-export default router;
+export default new AuthRoutes().router;
