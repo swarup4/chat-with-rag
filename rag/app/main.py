@@ -15,7 +15,7 @@ def ingest():
         return jsonify({"error": "No file uploaded"}), 400
     file = request.files["file"]
     doc_id = rag_service.ingest_document(file)
-    return jsonify({"status": "Ingestion started", "document_id": doc_id})
+    return jsonify({"status": "Ingestion completed", "document_id": doc_id})
 
 @app.route("/qa", methods=["POST"])
 def qa():

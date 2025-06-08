@@ -8,4 +8,4 @@ MONGODB_ATLAS_CLUSTER_URI = os.getenv("MONGODB_ATLAS_CLUSTER_URI")
 client = MongoClient(MONGODB_ATLAS_CLUSTER_URI)
 db = client["llm"]
 documents_collection = db["documents"]
-embeddings_collection = db["embeddings"] 
+embeddings_collection = db["vector"] 

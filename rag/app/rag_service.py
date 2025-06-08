@@ -17,7 +17,6 @@ class RAGService:
     def __init__(self):
         load_dotenv()
         self.embedding = EmbeddingModel()
-        # self.llm_repo_id = "meta-llama/Meta-Llama-3.1-8B-Instruct"
         self.llm_repo_id = "HuggingFaceH4/zephyr-7b-beta"
         self.vector_index_name = "vector-stores-index"
         self.db_name = "llm"
@@ -40,9 +39,11 @@ class RAGService:
         self.vector_store.create_vector_search_index(dimensions=384)
         
 
-    def ingest_document(self, file) -> str:
+    def ingest_document(self, file):
         path = save_temp_pdf(file)
         docs = load_pdf(path)
+        text = "\n\n".join(chunk.page_content for chunk in docs)
+
         text_splitter = RecursiveCharacterTextSplitter(
             is_separator_regex=True,
             length_function=len,
@@ -50,19 +51,22 @@ class RAGService:
             chunk_size=500,
             chunk_overlap=50
         )
-        chunks = text_splitter.create_documents([d.page_content for d in docs])
-        texts = [c.page_content for c in chunks]
+        chunks = text_splitter.create_documents(texts=[text])
         
+        texts = [c.page_content for c in chunks]
         vectors = self.embedding.embed_texts(texts)
         doc = documents_collection.insert_one({"name": file.filename})
         doc_id = str(doc.inserted_id)
+        print("Doc ID ===>>> ", doc_id)
+
         for text, vector in zip(texts, vectors):
             embeddings_collection.insert_one({
                 "document_id": doc_id,
                 "chunk": text,
                 "embedding": vector
             })
-        self.vector_store.add_documents(chunks)
+
+        # self.vector_store.add_documents(chunks)
         return doc_id
 
     # def get_documents(self):
