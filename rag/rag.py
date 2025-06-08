@@ -4,109 +4,116 @@ from pymongo import MongoClient
 from langchain_mongodb import MongoDBAtlasVectorSearch
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_core.prompts import PromptTemplate
-from langchain.document_loaders import PyPDFLoader, DirectoryLoader, PyPDFDirectoryLoader
+from langchain_community.document_loaders import PyPDFDirectoryLoader
 from langchain_community.embeddings.fastembed import FastEmbedEmbeddings
-from langchain_huggingface import ChatHuggingFace, HuggingFaceEndpoint
+from langchain_huggingface import HuggingFaceEndpoint
+from langchain.memory import ConversationBufferMemory
+from langchain.chains import ConversationalRetrievalChain
 
-load_dotenv()
-HUGGINGFACEHUB_ACCESS_TOKEN = os.getenv("HUGGINGFACEHUB_ACCESS_TOKEN")
-MONGODB_ATLAS_CLUSTER_URI = os.getenv("MONGODB_ATLAS_CLUSTER_URI")
+# --- Configuration and Setup ---
+def load_config():
+    load_dotenv()
+    return {
+        "HUGGINGFACEHUB_ACCESS_TOKEN": os.getenv("HUGGINGFACEHUB_ACCESS_TOKEN"),
+        "MONGODB_ATLAS_CLUSTER_URI": os.getenv("MONGODB_ATLAS_CLUSTER_URI"),
+        "DB_NAME": "llm",
+        "COLLECTION_NAME": "vector",
+        "ATLAS_VECTOR_SEARCH_INDEX_NAME": "vector-stores-index",
+        "PDF_PATH": "./Trip/Thailand",
+    }
 
-embedding = FastEmbedEmbeddings()
+# --- Data Loading and Chunking ---
+def load_and_chunk_pdfs(pdf_path):
+    loader = PyPDFDirectoryLoader(
+        path=pdf_path,
+        glob="*.pdf",
+    )
+    data = loader.load()
+    print("Data Count ===>>> ", len(data))
+    text = "\n\n".join(chunk.page_content for chunk in data)
 
-llm = HuggingFaceEndpoint(
-    repo_id="HuggingFaceH4/zephyr-7b-beta",
-    task="text-generation",
-    huggingfacehub_api_token=HUGGINGFACEHUB_ACCESS_TOKEN,
-)
+    splitter = RecursiveCharacterTextSplitter(
+        is_separator_regex=True,
+        length_function=len,
+        separators=["\n\n", "\n", " ", ""],
+        chunk_size=500,
+        chunk_overlap=50
+    )
+    return splitter.create_documents(texts=[text])
 
-# loader = DirectoryLoader(
-#     path='./Trip/Thailand',
-#     glob='*.pdf',
-#     loader_cls=PyPDFLoader
-# )
+# --- Vector Store Setup ---
+def setup_vector_store(config, embedding, chunk):
+    client = MongoClient(config["MONGODB_ATLAS_CLUSTER_URI"])
+    collection = client[config["DB_NAME"]][config["COLLECTION_NAME"]]
+    vector_store = MongoDBAtlasVectorSearch(
+        collection=collection,
+        embedding=embedding,
+        index_name=config["ATLAS_VECTOR_SEARCH_INDEX_NAME"],
+        relevance_score_fn="cosine",
+    )
+    # vector_store.create_vector_search_index(dimensions=384)
+    vector_store.add_documents(chunk)
+    return vector_store
 
-loader = PyPDFDirectoryLoader(
-    path='./Trip/Thailand',
-    glob = "*.pdf",
-    silent_errors = False,
-    load_hidden = False,
-    recursive = False,
-    extract_images = False,
-    password = None,
-    mode = "page",
-    images_to_text = None,
-    headers = None,
-    extraction_mode = "plain",
-    # extraction_kwargs = None,
-)
+# --- Conversation Chain Setup ---
+def setup_conversation_chain(llm, retriever):
+    memory = ConversationBufferMemory(
+        memory_key="chat_history",
+        output_key="answer",
+        return_messages=True
+    )
+    prompt = PromptTemplate(
+        template="""
+        You are a helpful travel assistant.
+        Here is the previous conversation:
+        {chat_history}
 
-data = loader.load()
-print("Data Count ===>>> ", len(data))
-text = "\n\n".join(chunk.page_content for chunk in data)
+        Answer only from the provided transcript context.
+        If the context is insufficient, just say you don't know.
 
-### Create Text convert into Chunks
-splitter = RecursiveCharacterTextSplitter(
-    is_separator_regex=True, 
-    length_function=len, 
-    separators=["\n\n", "\n", " ", ""],
-    chunk_size=500, 
-    chunk_overlap=50
-)
-chunk = splitter.create_documents(texts=[text])
+        {context}
+        Question: {question}
+        """,
+        input_variables=['chat_history', 'context', 'question']
+    )
+    return ConversationalRetrievalChain.from_llm(
+        llm=llm,
+        retriever=retriever,
+        memory=memory,
+        combine_docs_chain_kwargs={'prompt': prompt},
+        return_source_documents=True,
+        verbose=True,
+        rephrase_question=True,
+    )
 
-# initialize MongoDB python client
-client = MongoClient(MONGODB_ATLAS_CLUSTER_URI)
+# --- Main Chat Loop ---
+def chat_loop(conversation_chain):
+    print("\nWelcome to the Travel Assistant! Type 'exit' to quit.\n")
+    while True:
+        user_input = input("User: ")
+        if user_input.lower() in ["exit", "quit"]:
+            print("Goodbye!")
+            break
+        result = conversation_chain({"question": user_input})
+        print("Assistant:", result["answer"])
 
-DB_NAME = "llm"
-COLLECTION_NAME = "vector"
-ATLAS_VECTOR_SEARCH_INDEX_NAME = "vector-stores-index"
-MONGODB_COLLECTION = client[DB_NAME][COLLECTION_NAME]
-
-vector_store = MongoDBAtlasVectorSearch(
-    collection=MONGODB_COLLECTION,
-    embedding=embedding,
-    index_name=ATLAS_VECTOR_SEARCH_INDEX_NAME,
-    relevance_score_fn="cosine",
-)
-
-vector_store.create_vector_search_index(dimensions=1536)
-vector_store.add_documents(chunk)
-
-retriever = vector_store.as_retriever(
-    search_type="similarity",
-    search_kwargs={"k": 4},
-)
-query = "Tell me about Foolmoon Party plan"
-result = retriever.invoke(query)
-
-# # Print results
-# for doc in result:
-#     print(doc.page_content)
-
-
-# Extra Task
-def format_doc(result):
-    text = "\n\n".join(doc.page_content for doc in result)
-    return text
-
-
-prompt = PromptTemplate(
-    template="""
-    You are a helpful travel assistant.
-    Answer Only from the provided transcript context.
-    If the context is insufficient, just say you don't know.
-
-    {context}
-    Question: {question}
-    """,
-    input_variables=['context', 'question']
-)
-
-
-context_text = format_doc(result)
-final_prompt = prompt.invoke({"context": context_text, "question": query})
-
-model= ChatHuggingFace(llm=llm)
-answer = model.invoke(final_prompt)
-print(answer.content)
+# --- Main Execution ---
+if __name__ == "__main__":
+    config = load_config()
+    embedding = FastEmbedEmbeddings()
+    
+    llm = HuggingFaceEndpoint(
+        repo_id="HuggingFaceH4/zephyr-7b-beta",
+        task="text-generation",
+        huggingfacehub_api_token=config["HUGGINGFACEHUB_ACCESS_TOKEN"],
+    )
+    
+    chunk = load_and_chunk_pdfs(config["PDF_PATH"])
+    vector_store = setup_vector_store(config, embedding, chunk)
+    
+    retriever = vector_store.as_retriever(
+        search_type="similarity",
+        search_kwargs={"k": 4},
+    )
+    conversation_chain = setup_conversation_chain(llm, retriever)
+    chat_loop(conversation_chain)
