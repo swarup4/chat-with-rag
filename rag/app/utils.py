@@ -1,6 +1,5 @@
-from langchain.document_loaders import PyPDFLoader
+from langchain_community.document_loaders import PyPDFLoader
 from tempfile import NamedTemporaryFile
-
 
 def save_temp_pdf(file):
     temp = NamedTemporaryFile(delete=False, suffix=".pdf")
@@ -10,4 +9,4 @@ def save_temp_pdf(file):
 
 def load_pdf(path):
     loader = PyPDFLoader(path)
-    return loader.load()
+    return loader.load() 

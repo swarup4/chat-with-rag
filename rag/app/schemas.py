@@ -14,4 +14,4 @@ class QAResponse(BaseModel):
 
 class DocumentInfo(BaseModel):
     id: str
-    name: str
+    name: str 
