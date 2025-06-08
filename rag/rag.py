@@ -51,7 +51,7 @@ def setup_vector_store(config, embedding, chunk):
         index_name=config["ATLAS_VECTOR_SEARCH_INDEX_NAME"],
         relevance_score_fn="cosine",
     )
-    # vector_store.create_vector_search_index(dimensions=384)
+    vector_store.create_vector_search_index(dimensions=384)
     vector_store.add_documents(chunk)
     return vector_store
 
