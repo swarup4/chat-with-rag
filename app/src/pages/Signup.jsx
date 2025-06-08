@@ -2,7 +2,7 @@ import React from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useFormik } from 'formik'
 import { object, string } from 'yup'
-import { HOST_URL } from '../../constants'
+import { HOST_URL } from '../constants'
 import axios from 'axios'
 
 const initialValues = {

@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useFormik } from 'formik'
 import { object, string } from 'yup'
 import axios from 'axios'
-import { HOST_URL } from '../../constants'
+import { HOST_URL } from '../constants'
 
 const initialValues = {
     email: '',
@@ -16,7 +16,6 @@ const schema = object({
 
 export default function Login() {
     const navigate = useNavigate();
-    // const [isLoading, setIsLoading] = useState(false);
 
     const { values, errors, handleBlur, handleChange, handleSubmit, touched } = useFormik({
         initialValues: initialValues,
