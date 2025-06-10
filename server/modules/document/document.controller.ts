@@ -16,7 +16,6 @@ export class DocumentController {
     async deleteDocument(req: Request, res: Response) {
         try {
             const id = req.params.id;
-            console.log(id);
             const doc = await DocumentModel.findOneAndDelete({ _id: id });
             const vector = await VectorModel.deleteMany({ documentId: id });
 
