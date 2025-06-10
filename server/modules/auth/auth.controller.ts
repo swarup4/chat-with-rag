@@ -6,24 +6,40 @@ import User from '../user/user.model';
 dotenv.config();
 
 export class AuthController {
+    async getUserInfo(req: Request, res: Response) {
+        try {
+            const user = await User.findById(req.params.id);
+            if (!user) {
+                res.status(404).json({ message: 'User not found' });
+            }
+            res.json({
+                id: user?._id,
+                email: user?.email,
+                name: user?.name,
+                role: user?.role
+            });
+        } catch (error) {
+            res.status(500).send('Server error');
+        }
+    }
     async register(req: Request, res: Response) {
         try {
-        const model = new User(req.body);
-        const user = await model.save();
-        const obj = { id: user._id, email: user.email };
-        const token = jwt.sign(obj, process.env.SECRATE_KEY || '', {
-            expiresIn: 3600
-        });
+            const model = new User(req.body);
+            const user = await model.save();
+            const obj = { id: user._id, email: user.email };
+            const token = jwt.sign(obj, process.env.SECRATE_KEY || '', {
+                expiresIn: 3600
+            });
 
-        res.send({
-            id: user._id,
-            email: user.email,
-            name: user.name,
-            token: token
-        });
-    } catch (error) {
-        res.send(error);
-    }
+            res.send({
+                id: user._id,
+                email: user.email,
+                name: user.name,
+                token: token
+            });
+        } catch (error) {
+            res.send(error);
+        }
     }
 
     async login(req: Request, res: Response) {
@@ -54,10 +70,5 @@ export class AuthController {
         } catch (error) {
             res.send(error);
         }
-    }
-
-    async logout(req: Request, res: Response) {
-        // TODO: Implement logout logic
-        res.send('Logout endpoint');
     }
 }

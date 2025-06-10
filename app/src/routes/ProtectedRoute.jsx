@@ -1,9 +1,27 @@
-import React from 'react';
-import { Navigate, Outlet } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 
-// Replace with real auth logic
-const isAuthenticated = () => !!sessionStorage.auth;
 
-export default function ProtectedRoute() {
-    return isAuthenticated() ? <Outlet /> : <Navigate to="/login" replace />;
-} 
+export default function ProtectedRoute(props) {
+    const location = useLocation();
+    const navigate = useNavigate();
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const auth = JSON.parse(sessionStorage.getItem('auth'));
+
+    useEffect(() => {
+        if (!auth) {
+            setIsLoggedIn(false);
+            return navigate('/');
+        }
+
+        setIsLoggedIn(true);
+        if (auth.role === 'admin' && !location.pathname.startsWith('/admin')) {
+            return navigate('/admin');
+        }
+        if (auth.role === 'user' && !location.pathname.startsWith('/dashboard')) {
+            return navigate('/dashboard');
+        }
+    }, [auth, location, navigate, isLoggedIn]);
+
+    return <> {isLoggedIn ? props.children : null} </>
+}

@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { IngestionController } from './ingestion.controller.js';
+import { IngestionController } from './ingestion.controller';
 
 class IngestionRoutes {
   public router = Router();

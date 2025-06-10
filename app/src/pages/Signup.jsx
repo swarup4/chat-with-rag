@@ -135,7 +135,7 @@ export default function Signup() {
                                 <span className='bg-white px-2.5'>Do you have account</span>
                             </div>
                         </div>
-                        <Link to='/login' className="font-semibold text-indigo-600 hover:text-indigo-500">
+                        <Link to='/' className="font-semibold text-indigo-600 hover:text-indigo-500">
                             Sign In
                         </Link>
                     </div>

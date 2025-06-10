@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { UserController } from './user.controller.js';
+import { UserController } from './user.controller';
 
 class UserRoutes {
   public router = Router();
