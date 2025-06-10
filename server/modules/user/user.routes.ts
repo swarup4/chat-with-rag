@@ -6,8 +6,8 @@ class UserRoutes {
   private controller = new UserController();
 
   constructor() {
-    this.router.get('/', this.controller.getUsers.bind(this.controller));
-    // Add more user routes here as needed
+    this.router.get('/', this.controller.getAllUsers);
+    this.router.get('/getUser/:id', this.controller.getUsers);
   }
 }
 

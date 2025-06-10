@@ -6,7 +6,6 @@ class AuthRoutes {
     private controller = new AuthController();
 
     constructor() {
-        this.router.get('/getUserInfo/:id', this.controller.getUserInfo);
         this.router.post('/register', this.controller.register);
         this.router.post('/login', this.controller.login);
     }

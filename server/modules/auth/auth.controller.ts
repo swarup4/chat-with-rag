@@ -6,22 +6,6 @@ import User from '../user/user.model';
 dotenv.config();
 
 export class AuthController {
-    async getUserInfo(req: Request, res: Response) {
-        try {
-            const user = await User.findById(req.params.id);
-            if (!user) {
-                res.status(404).json({ message: 'User not found' });
-            }
-            res.json({
-                id: user?._id,
-                email: user?.email,
-                name: user?.name,
-                role: user?.role
-            });
-        } catch (error) {
-            res.status(500).send('Server error');
-        }
-    }
     async register(req: Request, res: Response) {
         try {
             const model = new User(req.body);
