@@ -31,7 +31,7 @@ export default function UserEdit({ user, onSave, onCancel }) {
                 </select>
             </div>
             <div className="flex gap-2">
-                <button type="submit" className="bg-indigo-600 text-white px-4 py-1 rounded">Save</button>
+                <button type="submit" className="bg-cyan-600 text-white px-4 py-1 rounded">Save</button>
                 <button type="button" onClick={onCancel} className="bg-gray-300 px-4 py-1 rounded">Cancel</button>
             </div>
         </form>

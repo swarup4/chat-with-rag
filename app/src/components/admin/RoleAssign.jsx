@@ -35,7 +35,7 @@ export default function RoleAssign() {
                     <option value="Admin">Admin</option>
                 </select>
             </div>
-            <button type="submit" className="bg-indigo-600 text-white px-4 py-1 rounded">Assign</button>
+            <button type="submit" className="bg-cyan-600 text-white px-4 py-1 rounded">Assign</button>
         </form>
     );
 } 

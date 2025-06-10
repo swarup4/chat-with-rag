@@ -1,8 +1,10 @@
 import os
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 from app.rag_service import RAGService
 
 app = Flask(__name__)
+CORS(app)
 rag_service = RAGService()
 
 @app.route("/", methods=["GET"])

@@ -56,7 +56,7 @@ export default function Login() {
                             </label>
                             <div className="mt-2">
                                 <input id="email" name="email" type="email" autoComplete="email" value={values.email} onChange={handleChange} onBlur={handleBlur}
-                                    className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                                    className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-cyan-600 sm:text-sm sm:leading-6"
                                 />
                                 {errors.email && touched.email ? (
                                     <p className='mt-1 text-red-500'>{errors.email}</p>
@@ -70,14 +70,14 @@ export default function Login() {
                                     Password
                                 </label>
                                 <div className="text-sm">
-                                    <Link to='/forgotpassword' className="font-semibold text-indigo-600 hover:text-indigo-500">
+                                    <Link to='/forgotpassword' className="font-semibold text-cyan-600 hover:text-cyan-500">
                                         Forgot password?
                                     </Link>
                                 </div>
                             </div>
                             <div className="mt-2">
                                 <input id="password" name="password" type="password" autoComplete="current-password" value={values.password} onChange={handleChange} onBlur={handleBlur}
-                                    className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                                    className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-cyan-600 sm:text-sm sm:leading-6"
                                 />
                                 {(errors.password && touched.password) ? (
                                     <p className='mt-1 text-red-500'>{errors.password}</p>
@@ -87,7 +87,7 @@ export default function Login() {
 
                         <div>
                             <button type="submit"
-                                className="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+                                className="flex w-full justify-center rounded-md bg-cyan-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-cyan-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-600">
                                 Sign in
                             </button>
                         </div>
@@ -100,7 +100,7 @@ export default function Login() {
                                 <span className='bg-white px-2.5'>Don't have account</span>
                             </div>
                         </div>
-                        <Link to='/signup' className="font-semibold text-indigo-600 hover:text-indigo-500">
+                        <Link to='/signup' className="font-semibold text-cyan-600 hover:text-cyan-500">
                             Sign Up
                         </Link>
                     </div>

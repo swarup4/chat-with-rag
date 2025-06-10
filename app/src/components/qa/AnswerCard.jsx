@@ -1,24 +1,27 @@
 import React from 'react';
 
-export default function AnswerCard({ answer }) {
+export default function AnswerCard({ chats }) {
     return (
-        <div className="bg-gray-50 p-4 rounded shadow">
-            <div className="mb-2">
-                <span className="font-semibold">Answer:</span> {answer.text}
-            </div>
-            <div className="mb-2 text-sm text-gray-600">
-                Confidence: <span className="font-mono">{(answer.confidence * 100).toFixed(1)}%</span>
-            </div>
-            <div>
-                <span className="font-semibold">Relevant Excerpts:</span>
-                <ul className="list-disc ml-6 mt-1">
-                    {answer.excerpts.map((ex, idx) => (
-                        <li key={idx} className="text-sm text-gray-700">
-                            <span className="font-medium">{ex.doc}:</span> {ex.snippet}
-                        </li>
-                    ))}
-                </ul>
-            </div>
+        <div className="flex flex-col gap-4 mt-6 overflow-auto">
+            {chats.map((chat, index) => (
+                <>
+                    {chat.question && (
+                        <div className="flex justify-end">
+                            <div className="bg-indigo-100 text-indigo-900 px-4 py-2 rounded-2xl rounded-br-sm max-w-[70%] shadow">
+                                <span className="font-semibold">You:</span> {chat.question}
+                            </div>
+                        </div>
+                    )}
+
+                    {chat.answer && (
+                        <div className="flex justify-start">
+                            <div className="bg-teal-100 border text-teal-900 border-teal-200 px-4 py-2 rounded-2xl rounded-bl-sm max-w-[70%] shadow">
+                                <span className="font-semibold">Bot:</span> {chat.answer}
+                            </div>
+                        </div>
+                    )}
+                </>
+            ))}
         </div>
     );
-} 
+}

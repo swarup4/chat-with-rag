@@ -5,7 +5,7 @@ import Sidebar from './Sidebar';
 
 function Footer() {
     return (
-        <footer className="bg-indigo-700 text-white text-center py-2 mt-8">
+        <footer className="bg-cyan-700 text-white text-center py-2 mt-8">
             &copy; {new Date().getFullYear()} GenAI App. All rights reserved.
         </footer>
     );

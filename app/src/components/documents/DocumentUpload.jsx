@@ -48,11 +48,7 @@ export default function DocumentUpload() {
                     ))}
                 </ul>
             )}
-            <button
-                className="bg-indigo-600 text-white px-4 py-2 rounded disabled:opacity-50"
-                disabled={files.length === 0}
-                onClick={handleUpload}
-            >
+            <button onClick={handleUpload} disabled={files.length === 0} className="bg-cyan-600 text-white px-4 py-2 rounded disabled:opacity-50">
                 Upload
             </button>
         </div>

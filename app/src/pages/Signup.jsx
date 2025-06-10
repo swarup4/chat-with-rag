@@ -66,10 +66,10 @@ export default function Signup() {
                             <div className="mt-2">
                                 <div className='grid grid-flow-row-dense grid-cols-2 gap-x-4'>
                                     <input id="fname" name="fname" type="text" autoComplete="fname" placeholder="Enter First Name" value={values.fname} onChange={handleChange} onBlur={handleBlur} required
-                                        className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                                        className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-cyan-600 sm:text-sm sm:leading-6"
                                     />
                                     <input id="lname" name="lname" type="text" autoComplete="lname" placeholder="Enter Last Name" value={values.lname} onChange={handleChange} onBlur={handleBlur} required
-                                        className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                                        className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-cyan-600 sm:text-sm sm:leading-6"
                                     />
                                 </div>
                                 <div className="grid grid-flow-row-dense grid-cols-2 gap-x-4">
@@ -85,7 +85,7 @@ export default function Signup() {
                             </label>
                             <div className="mt-2">
                                 <input id="username" name="username" type="text" autoComplete="username" placeholder="Enter Username" value={values.username} onChange={handleChange} onBlur={handleBlur} required
-                                    className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                                    className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-cyan-600 sm:text-sm sm:leading-6"
                                 />
                                 {errors.username && touched.username ? (
                                     <p className='mt-1 text-red-500'>{errors.username}</p>
@@ -99,7 +99,7 @@ export default function Signup() {
                             </label>
                             <div className="mt-2">
                                 <input id="email" name="email" type="email" autoComplete="email" placeholder="Enter Email" value={values.email} onChange={handleChange} onBlur={handleBlur} required
-                                    className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                                    className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-cyan-600 sm:text-sm sm:leading-6"
                                 />
                                 {errors.email && touched.email ? (
                                     <p className='mt-1 text-red-500'>{errors.email}</p>
@@ -113,7 +113,7 @@ export default function Signup() {
                             </label>
                             <div className="mt-2">
                                 <input id="password" name="password" type="password" autoComplete="current-password" placeholder="Enter Password" value={values.password} onChange={handleChange} onBlur={handleBlur} required
-                                    className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                                    className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-cyan-600 sm:text-sm sm:leading-6"
                                 />
                                 {errors.password && touched.password ? (
                                     <p className='mt-1 text-red-500'>{errors.password}</p>
@@ -122,7 +122,7 @@ export default function Signup() {
                         </div>
 
                         <div>
-                            <button type="submit" className="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+                            <button type="submit" className="flex w-full justify-center rounded-md bg-cyan-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-cyan-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-600">
                                 Sign up
                             </button>
                         </div>
@@ -135,7 +135,7 @@ export default function Signup() {
                                 <span className='bg-white px-2.5'>Do you have account</span>
                             </div>
                         </div>
-                        <Link to='/' className="font-semibold text-indigo-600 hover:text-indigo-500">
+                        <Link to='/' className="font-semibold text-cyan-600 hover:text-cyan-500">
                             Sign In
                         </Link>
                     </div>

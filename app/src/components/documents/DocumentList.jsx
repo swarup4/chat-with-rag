@@ -24,7 +24,7 @@ export default function DocumentList() {
                             <td className="px-4 py-2 border-b">{doc.name}</td>
                             <td className="px-4 py-2 border-b">{doc.uploaded}</td>
                             <td className="px-4 py-2 border-b">
-                                <button className="text-indigo-600 hover:underline mr-2">View</button>
+                                <button className="text-cyan-600 hover:underline mr-2">View</button>
                                 <button className="text-green-600 hover:underline mr-2">Download</button>
                                 <button className="text-red-600 hover:underline">Delete</button>
                             </td>
