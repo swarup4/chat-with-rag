@@ -4,7 +4,8 @@ import { Outlet } from 'react-router-dom';
 
 const links = [
     { label: 'Documents', to: '/admin/documents' },
-    { label: 'Users', to: '/admin/users' }
+    { label: 'Users', to: '/admin/users' },
+    { label: 'Roles', to: '/admin/roles' }
 ];
 
 export default function AdminLayout() {
