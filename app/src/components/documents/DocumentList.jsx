@@ -1,5 +1,6 @@
 import React, {useState, useEffect, useRef} from 'react';
-import axios from 'axios';
+// import axios from 'axios';
+import axios from '../../axiosInstance';
 import { HOST_URL } from '../../constants'
 
 export default function DocumentList({ refresh }) {
