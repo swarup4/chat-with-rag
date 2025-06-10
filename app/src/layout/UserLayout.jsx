@@ -6,14 +6,13 @@ const links = [
     { label: 'Q&A', to: '/dashboard' }
 ];
 
-function UserLayout({ user, onLogout }) {
+export default function UserLayout() {
+    const user = JSON.parse(sessionStorage.getItem('user'));
     return (
-        <Layout user={user} onLogout={onLogout} sidebarLinks={links}>
+        <Layout user={user} sidebarLinks={links}>
             <main className="main-content">
                 <Outlet />
             </main>
         </Layout>
     );
 }
-
-export default UserLayout;

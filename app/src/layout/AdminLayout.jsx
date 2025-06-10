@@ -7,14 +7,13 @@ const links = [
     { label: 'Users', to: '/admin/users' }
 ];
 
-function AdminLayout({ user, onLogout }) {
+export default function AdminLayout() {
+    const user = JSON.parse(sessionStorage.getItem('user'));
     return (
-        <Layout user={user} onLogout={onLogout} sidebarLinks={links}>
+        <Layout user={user} sidebarLinks={links}>
             <main className="main-content">
                 <Outlet />
             </main>
         </Layout>
     );
 }
-
-export default AdminLayout;

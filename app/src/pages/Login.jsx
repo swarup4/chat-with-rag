@@ -31,6 +31,7 @@ export default function Login() {
         axios.post(url, data).then(res => {
             console.log(res.data);
             sessionStorage.auth = res.data.token;
+            sessionStorage.user = JSON.stringify({ name: res.data.name, role: res.data.role });
             let location = sessionStorage.url;
             if (!location) {
                 location = res.data.role === 'admin' ? '/admin' : '/dashboard';

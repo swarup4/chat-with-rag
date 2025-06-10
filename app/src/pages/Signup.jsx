@@ -34,6 +34,7 @@ export default function Signup() {
         const url = `${HOST_URL}/api/auth/register`
         axios.post(url, values).then(res => {
             sessionStorage.auth = res.data.token;
+            sessionStorage.user = JSON.stringify({ name: res.data.name, role: res.data.role });
             const location = res.data.role === 'admin' ? '/admin' : '/dashboard';
             navigate(location);
         }).catch(err => {

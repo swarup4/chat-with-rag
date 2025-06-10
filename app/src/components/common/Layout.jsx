@@ -11,21 +11,11 @@ function Footer() {
     );
 }
 
-export default function Layout({ user, onLogout, sidebarLinks }) {
-    const navigate = useNavigate();
-
-    function handleLogout() {
-        if (onLogout) {
-            onLogout();
-        } else {
-            sessionStorage.clear();
-            navigate('/');
-        }
-    }
+export default function Layout({ user, sidebarLinks }) {
 
     return (
         <div className="flex flex-col min-h-screen">
-            <Navbar user={user} onLogout={handleLogout} />
+            <Navbar user={user} />
             <div className="flex flex-1">
                 <Sidebar sidebarLinks={sidebarLinks} />
                 <main className="flex-1 pt-4 px-4">

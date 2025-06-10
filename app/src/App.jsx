@@ -34,9 +34,9 @@ function App() {
             path: 'admin',
             element: <AdminLayout />,
             children: [{
-                // path: '',
-                // element: <ProtectedRoute><Outlet /></ProtectedRoute>,
-                // children: [{
+                path: '',
+                element: <ProtectedRoute><Outlet /></ProtectedRoute>,
+                children: [{
                     path: '',
                     element: <AdminDashboard />,
                 }, {
@@ -48,7 +48,7 @@ function App() {
                 }, {
                     path: 'roles',
                     element: <RoleAssign />,
-                // }]
+                }]
             }]
         }
     ]);
