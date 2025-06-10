@@ -13,11 +13,16 @@ def hello():
 
 @app.route("/ingest", methods=["POST"])
 def ingest():
+    doc_ids = []
     if "file" not in request.files:
-        return jsonify({"error": "No file uploaded"}), 400
-    file = request.files["file"]
-    doc_id = rag_service.ingest_document(file)
-    return jsonify({"status": "Ingestion completed", "document_id": doc_id})
+        return jsonify({"error": "No files uploaded"}), 400
+    
+    files = request.files.getlist("file")
+    for file in files:
+        doc_id = rag_service.ingest_document(file)
+        doc_ids.append(doc_id)
+
+    return jsonify({"status": "Ingestion completed", "document_ids": doc_ids})
 
 @app.route("/qa", methods=["POST"])
 def qa():

@@ -4,7 +4,7 @@ export default function AnswerCard({ chats }) {
     return (
         <div className="flex flex-col gap-4 mt-6 overflow-auto">
             {chats.map((chat, index) => (
-                <>
+                <div key={index} className="flex flex-col gap-2">
                     {chat.question && (
                         <div className="flex justify-end">
                             <div className="bg-indigo-100 text-indigo-900 px-4 py-2 rounded-2xl rounded-br-sm max-w-[70%] shadow">
@@ -20,7 +20,7 @@ export default function AnswerCard({ chats }) {
                             </div>
                         </div>
                     )}
-                </>
+                </div>
             ))}
         </div>
     );

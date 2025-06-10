@@ -1,7 +1,6 @@
 import os
-from typing import List, Optional
+import datetime
 from dotenv import load_dotenv
-from pymongo import MongoClient
 from langchain_community.embeddings.fastembed import FastEmbedEmbeddings
 from langchain_mongodb import MongoDBAtlasVectorSearch
 from langchain_text_splitters import RecursiveCharacterTextSplitter
@@ -48,12 +47,13 @@ class RAGService:
         
         texts = [c.page_content for c in chunks]
         vectors = self.embedding.embed_texts(texts)
-        doc = documents_collection.insert_one({"name": file.filename})
+        now = datetime.datetime.utcnow()
+        doc = documents_collection.insert_one({"name": file.filename, "createdAt": now, "updatedAt": now})
         doc_id = str(doc.inserted_id)
 
         for text, vector in zip(texts, vectors):
             embeddings_collection.insert_one({
-                "document_id": doc_id,
+                "documentId": doc_id,
                 "chunk": text,
                 "embedding": vector
             })

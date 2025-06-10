@@ -1,23 +1,37 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useRef} from 'react';
 import axios from 'axios';
 import { HOST_URL } from '../../constants'
 
-export default function DocumentList() {
+export default function DocumentList({ refresh }) {
     const [documents, setDocuments] = useState([]);
+    const isFirstRender = useRef(true);
 
     useEffect(() => {
-        const url = `${HOST_URL}/api/documents`
+        if (isFirstRender.current) {
+            isFirstRender.current = false;
+            return;
+        }
+        const url = `${HOST_URL}/api/documents`;
         axios.get(url).then(res => {
             setDocuments(res.data);
         }).catch(err => {
             console.log(err)
         })
-    }, [])
+    }, [refresh]);
 
     function getDate(date) {
         if (!date) return '';
         const d = new Date(date);
         return `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
+    }
+
+    function deleteDocument(id) {
+        const url = `${HOST_URL}/api/documents/deleteDocument/${id}`;
+        axios.delete(url).then(res => {
+            setDocuments(documents.filter(doc => doc._id !== id));
+        }).catch(err => {
+            console.log(err);
+        });
     }
 
     return (
@@ -32,14 +46,12 @@ export default function DocumentList() {
                     </tr>
                 </thead>
                 <tbody>
-                    {documents.map(doc => (
-                        <tr key={doc.id} className="hover:bg-gray-50">
+                    {documents.map((doc, idx) => (
+                        <tr key={doc.idx} className="hover:bg-gray-50">
                             <td className="px-4 py-2 border-b">{doc.name}</td>
                             <td className="px-4 py-2 border-b">{getDate(doc.createdAt)}</td>
                             <td className="px-4 text-center py-2 border-b">
-                                {/* <button className="text-cyan-600 hover:underline mr-2">View</button>
-                                <button className="text-green-600 hover:underline mr-2">Download</button> */}
-                                <button className="text-red-600 hover:underline">Delete</button>
+                                <button onClick={() => deleteDocument(doc._id)} className="text-red-600 pointer-hand">Delete</button>
                             </td>
                         </tr>
                     ))}
@@ -47,4 +59,4 @@ export default function DocumentList() {
             </table>
         </div>
     );
-} 
+}

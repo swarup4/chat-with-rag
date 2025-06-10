@@ -7,6 +7,13 @@ export interface IDocument extends Document {
     updatedAt: Date;
 }
 
+export interface IVector extends Document {
+    _id: Types.ObjectId;
+    documentId: string;
+    chunk: string;
+    embedding: number[];
+}
+
 const DocumentSchema = new Schema<IDocument>({
     _id: { type: Schema.Types.ObjectId },
     name: { type: String, required: true },
@@ -17,4 +24,15 @@ const DocumentSchema = new Schema<IDocument>({
     timestamps: true
 });
 
-export default mongoose.model<IDocument>('Document', DocumentSchema);
+const VectorSchema = new Schema<IVector>({
+    _id: { type: Schema.Types.ObjectId },
+    documentId: { type: String, required: true },
+    chunk: { type: String },
+    embedding: { type: [Number], default: [] }
+}, {
+    versionKey: false,
+    timestamps: true
+});
+
+export const DocumentModel = mongoose.model<IDocument>('Document', DocumentSchema);
+export const VectorModel = mongoose.model<IVector>('Vector', VectorSchema);

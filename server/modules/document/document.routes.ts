@@ -7,6 +7,7 @@ class DocumentRoutes {
 
     constructor() {
         this.router.get('/', this.controller.getAllDocument);
+        this.router.delete('/deleteDocument/:id', this.controller.deleteDocument);
     }
 }
 
