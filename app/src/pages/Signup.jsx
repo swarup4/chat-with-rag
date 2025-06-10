@@ -6,17 +6,15 @@ import { HOST_URL } from '../constants'
 import axios from 'axios'
 
 const initialValues = {
-    fname: '',
-    lname: '',
-    username: '',
+    name: '',
+    role: '',
     email: '',
     password: ''
 }
 
 const schema = object({
-    fname: string().required('Enter your first name'),
-    lname: string().required('Enter your last name'),
-    username: string().required('Enter a username'),
+    name: string().required('Enter your first name'),
+    role: string().required('Enter a role'),
     email: string().email('Email should be valid').required('Enter your email'),
     password: string().min(6, 'Password must be at least 6 characters').required('Enter your password')
 })
@@ -33,10 +31,10 @@ export default function Signup() {
     });
 
     function signup(values) {
-        const url = `${HOST_URL}user/signup`
+        const url = `${HOST_URL}/api/auth/register`
         axios.post(url, values).then(res => {
             sessionStorage.auth = res.data.token;
-            const location = sessionStorage.url;
+            const location = res.data.role === 'admin' ? '/admin' : '/dashboard';
             navigate(location);
         }).catch(err => {
             console.log(err)
@@ -64,31 +62,27 @@ export default function Signup() {
                                 Full Name
                             </label>
                             <div className="mt-2">
-                                <div className='grid grid-flow-row-dense grid-cols-2 gap-x-4'>
-                                    <input id="fname" name="fname" type="text" autoComplete="fname" placeholder="Enter First Name" value={values.fname} onChange={handleChange} onBlur={handleBlur} required
-                                        className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-cyan-600 sm:text-sm sm:leading-6"
-                                    />
-                                    <input id="lname" name="lname" type="text" autoComplete="lname" placeholder="Enter Last Name" value={values.lname} onChange={handleChange} onBlur={handleBlur} required
+                                <div className='grid grid-flow-row-dense gap-x-4'>
+                                    <input id="name" name="name" type="text" autoComplete="name" placeholder="Enter Full Name" value={values.name} onChange={handleChange} onBlur={handleBlur} required
                                         className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-cyan-600 sm:text-sm sm:leading-6"
                                     />
                                 </div>
                                 <div className="grid grid-flow-row-dense grid-cols-2 gap-x-4">
-                                    <div>{errors.fname && touched.fname ? (<p className='mt-1 text-red-500'>{errors.fname}</p>) : ''}</div>
-                                    <div>{errors.lname && touched.lname ? (<p className='mt-1 text-red-500'>{errors.lname}</p>) : ''}</div>
+                                    <div>{errors.name && touched.name ? (<p className='mt-1 text-red-500'>{errors.name}</p>) : ''}</div>
                                 </div>
                             </div>
                         </div>
 
                         <div>
-                            <label htmlFor="username" className="block text-sm font-medium leading-6 text-gray-900">
-                                Username
+                            <label htmlFor="Role" className="block text-sm font-medium leading-6 text-gray-900">
+                                Role
                             </label>
                             <div className="mt-2">
-                                <input id="username" name="username" type="text" autoComplete="username" placeholder="Enter Username" value={values.username} onChange={handleChange} onBlur={handleBlur} required
+                                <input id="role" name="role" type="text" autoComplete="role" placeholder="Enter Role" value={values.role} onChange={handleChange} onBlur={handleBlur} required
                                     className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-cyan-600 sm:text-sm sm:leading-6"
                                 />
-                                {errors.username && touched.username ? (
-                                    <p className='mt-1 text-red-500'>{errors.username}</p>
+                                {errors.role && touched.role ? (
+                                    <p className='mt-1 text-red-500'>{errors.role}</p>
                                 ) : ''}
                             </div>
                         </div>

@@ -23,12 +23,12 @@ function App() {
             path: 'dashboard',
             element: <UserLayout />,
             children: [{
-                // path: '',
-                // element: <ProtectedRoute><Outlet /></ProtectedRoute>,
-                // children: [{
+                path: '',
+                element: <ProtectedRoute><Outlet /></ProtectedRoute>,
+                children: [{
                     path: '',
                     element: <QAPage />,
-                // }]
+                }]
             }]
         }, {
             path: 'admin',

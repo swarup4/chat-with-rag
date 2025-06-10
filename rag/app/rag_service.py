@@ -72,14 +72,18 @@ class RAGService:
         prompt = PromptTemplate(
             template="""
             You are a helpful travel assistant.
-            Here is the previous conversation:
+            Use only the provided context to answer the user's question.
+            If the context does not contain enough information, reply with "I don't know."
+
+            Context:
+            {context}
+
+            Conversation history:
             {chat_history}
 
-            Answer only from the provided transcript context.
-            If the context is insufficient, just say you don't know.
-
-            {context}
             Question: {question}
+            
+            Note: Don't give me any kind of object key like "answer", "context" ect. Just give me the content.
             """,
             input_variables=['chat_history', 'context', 'question']
         )
@@ -106,3 +110,9 @@ class RAGService:
         chain = self.get_chain()
         result = chain({"question": question})
         return result["answer"] 
+        # answer = result["answer"]
+        # # Remove unwanted prefixes and whitespace
+        # for prefix in ["Transcript:", "Answer:"]:
+        #     if answer.strip().startswith(prefix):
+        #         answer = answer.strip()[len(prefix):]
+        # return answer.strip() 

@@ -5,9 +5,11 @@ dotenv.config();
 
 export const connectDB = async () => {
     try {
-        await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/chat-with-rag', {
-            // useNewUrlParser: true, useUnifiedTopology: true // Not needed in mongoose >= 6
-        });
+        const mongoUri = `${process.env.MONGODB_URI}/${process.env.MONGODB_DB_NAME}`;
+        if (!mongoUri) {
+            throw new Error('MONGODB_URI environment variable is not defined');
+        }
+        await mongoose.connect(mongoUri);
         console.log('MongoDB connected');
     } catch (error) {
         console.error('MongoDB connection error:', error);

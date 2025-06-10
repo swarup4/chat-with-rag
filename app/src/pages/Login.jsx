@@ -27,11 +27,15 @@ export default function Login() {
     });
 
     function login(data) {
-        const url = `${HOST_URL}user/login`
+        const url = `${HOST_URL}/api/auth/login`
         axios.post(url, data).then(res => {
-            // console.log(res.data);
+            console.log(res.data);
             sessionStorage.auth = res.data.token;
-            const location = sessionStorage.url;
+            let location = sessionStorage.url;
+            if (!location) {
+                location = res.data.role === 'admin' ? '/admin' : '/dashboard';
+            }
+
             navigate(location);
         }).catch(err => {
             console.log(err)
