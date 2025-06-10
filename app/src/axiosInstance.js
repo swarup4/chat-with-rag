@@ -8,9 +8,10 @@ const axiosInstance = axios.create({
 // Request interceptor to add the authorization token to headers
 axiosInstance.interceptors.request.use(
     (config) => {
-        const token = sessionStorage.auth;
+        const token = JSON.parse(sessionStorage.user)?.token;
         if (token) {
-            config.headers['Authorization'] = token
+            console.log('Adding token to request headers:', token);
+            config.headers['Authorization'] = token;
         }
         return config;
     },
@@ -24,9 +25,7 @@ axiosInstance.interceptors.response.use(
     (response) => response,
     (error) => {
         if (error.response && error.response.status === 401) {
-            sessionStorage.removeItem('auth');
             sessionStorage.removeItem('user');
-
             window.location.href = '/';
         }
         return Promise.reject(error);

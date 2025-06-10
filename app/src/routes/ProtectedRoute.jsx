@@ -6,7 +6,7 @@ export default function ProtectedRoute(props) {
     const location = useLocation();
     const navigate = useNavigate();
     const [isLoggedIn, setIsLoggedIn] = useState(false);
-    const auth = JSON.parse(sessionStorage.getItem('auth'));
+    const auth = JSON.parse(sessionStorage.getItem('user'));
 
     useEffect(() => {
         if (!auth) {

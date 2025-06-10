@@ -23,7 +23,6 @@ export default function Navbar({ user }) {
     }, [dropdownOpen]);
 
     function logout() {
-        sessionStorage.removeItem('auth');
         sessionStorage.removeItem('user');
         navigate('/')
     }
