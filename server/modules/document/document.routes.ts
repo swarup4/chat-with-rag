@@ -2,13 +2,12 @@ import { Router } from 'express';
 import { DocumentController } from './document.controller';
 
 class DocumentRoutes {
-  public router = Router();
-  private controller = new DocumentController();
+    public router = Router();
+    private controller = new DocumentController();
 
-  constructor() {
-    this.router.post('/', this.controller.createDocument.bind(this.controller));
-    // Add more document routes here as needed
-  }
+    constructor() {
+        this.router.get('/', this.controller.getAllDocument);
+    }
 }
 
 export default new DocumentRoutes().router;
