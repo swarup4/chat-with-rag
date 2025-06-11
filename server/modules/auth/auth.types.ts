@@ -1,6 +1,8 @@
+import { UserRole } from '../user/user.types';
+
 export interface RegisterPayload {
     name: string,
-    role: string,
+    role: UserRole,
     email: string,
     password: string
 }

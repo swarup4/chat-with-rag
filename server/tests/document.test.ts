@@ -27,11 +27,11 @@ describe('DocumentController', () => {
             expect(res.json).toHaveBeenCalledWith(docs);
         });
 
-        it('should return 404 if no documents found', async () => {
-            (DocumentModel.find as jest.Mock).mockResolvedValue(null);
+        it('should return empty array if no documents found', async () => {
+            (DocumentModel.find as jest.Mock).mockResolvedValue([]);
             await controller.getAllDocument(req, res);
-            expect(res.status).toHaveBeenCalledWith(404);
-            expect(res.json).toHaveBeenCalledWith({ message: 'Document not found' });
+            expect(res.status).toHaveBeenCalledWith(200);
+            expect(res.json).toHaveBeenCalledWith([]);
         });
     });
 
@@ -54,7 +54,8 @@ describe('DocumentController', () => {
             const error = new Error('DB error');
             (DocumentModel.findOneAndDelete as jest.Mock).mockRejectedValue(error);
             await controller.deleteDocument(req, res);
-            expect(res.send).toHaveBeenCalledWith(error);
+            expect(res.status).toHaveBeenCalledWith(500);
+            expect(res.send).toHaveBeenCalledWith('Server error');
         });
     });
 });

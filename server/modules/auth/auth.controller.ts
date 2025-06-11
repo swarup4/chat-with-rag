@@ -9,9 +9,16 @@ export class AuthController {
         try {
             const authService = new AuthService();
             const result = await authService.register(req.body);
-            res.json(result);
-        } catch (error) {
-            res.send(error);
+            const { user, token } = result;
+            res.status(200).json({
+                id: user._id,
+                email: user.email,
+                name: user.name,
+                role: user.role,
+                token
+            });
+        } catch (error: any) {
+            res.status(400).json({ message: error.message || 'Registration failed' });
         }
     }
 
@@ -24,9 +31,17 @@ export class AuthController {
             
             const authService = new AuthService();
             const result = await authService.login(obj);
-            res.json(result);
+            const { user, token } = result;
+            
+            res.status(200).json({
+                id: user._id,
+                email: user.email,
+                name: user.name,
+                role: user.role,
+                token
+            });
         } catch (error) {
-            res.send(error);
+            res.status(401).send(error);
         }
     }
 }

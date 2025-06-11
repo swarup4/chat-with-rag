@@ -1,13 +1,12 @@
 import { Request, Response } from 'express';
-import { DocumentModel, VectorModel } from './document.model';
+import { DocumentService } from './document.service';
+
 export class DocumentController {
     async getAllDocument(req: Request, res: Response) {
         try {
-            const document = await DocumentModel.find({});
-            if (!document) {
-                res.status(404).json({ message: 'Document not found' });
-            }
-            res.json(document);
+            const documentService = new DocumentService();
+            const documents = await documentService.getAllDocuments();
+            res.status(200).json(documents);
         } catch (error) {
             res.status(500).send('Server error');
         }
@@ -16,15 +15,11 @@ export class DocumentController {
     async deleteDocument(req: Request, res: Response) {
         try {
             const id = req.params.id;
-            const doc = await DocumentModel.findOneAndDelete({ _id: id });
-            const vector = await VectorModel.deleteMany({ documentId: id });
-
-            res.json({
-                success: true,
-                message: "Delete file successfully",
-            });
+            const documentService = new DocumentService();
+            const result = await documentService.deleteDocument(id);
+            res.status(200).json(result);
         } catch (error) {
-            res.send(error);
+            res.status(500).send('Server error');
         }
     }
 }

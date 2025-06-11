@@ -27,11 +27,11 @@ describe('UserController', () => {
             expect(res.json).toHaveBeenCalledWith(users);
         });
 
-        it('should return 404 if no users found', async () => {
-            (User.find as jest.Mock).mockResolvedValue(null);
+        it('should return empty array if no users found', async () => {
+            (User.find as jest.Mock).mockResolvedValue([]);
             await controller.getAllUsers(req, res);
-            expect(res.status).toHaveBeenCalledWith(404);
-            expect(res.json).toHaveBeenCalledWith({ message: 'User not found' });
+            expect(res.json).toHaveBeenCalledWith([]);
+            expect(res.status).not.toHaveBeenCalledWith(404);
         });
     });
 

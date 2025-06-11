@@ -1,3 +1,12 @@
+import User from './user.model';
+
 export class UserService {
-    // User management logic placeholder
+    async getAllUsers(): Promise<any[]> {
+        return await User.find({});
+    }
+
+    async getUserById(id: string): Promise<any> {
+        const user = await User.findById(id);
+        return user;
+    }
 }

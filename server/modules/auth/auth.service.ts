@@ -4,7 +4,7 @@ import { RegisterPayload, LoginPayload } from "./auth.types";
 import User from '../user/user.model';
 
 export class AuthService {
-    async register(userData: RegisterPayload) {
+    async register(userData: RegisterPayload): Promise<any>  {
         try {
             const model = new User(userData);
             const user = await model.save();
@@ -12,19 +12,13 @@ export class AuthService {
             const token = jwt.sign(obj, process.env.SECRATE_KEY || '', {
                 expiresIn: 3600
             });
-            return {
-                id: user._id,
-                email: user.email,
-                name: user.name,
-                role: user.role,
-                token
-            };
+            return { user, token };
         } catch (error) {
-            return error;
+            throw error;
         }
     }
 
-    async login(userData: LoginPayload) {
+    async login(userData: LoginPayload): Promise<any> {
         const user = await User.findOne(userData);
         if (!user) {
             throw new Error("Invalid email or password");
@@ -32,12 +26,6 @@ export class AuthService {
         
         const obj = { id: user._id, email: user.email };
         const token = jwt.sign(obj, process.env.SECRATE_KEY || '', { expiresIn: 3600 });
-        return {
-            id: user._id,
-            email: user.email,
-            name: user.name,
-            role: user.role,
-            token
-        };
+        return { user, token };
     }
 }
