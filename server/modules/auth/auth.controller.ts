@@ -1,27 +1,15 @@
 import dotenv from 'dotenv';
 import { Request, Response } from 'express';
-import jwt from 'jsonwebtoken';
-import User from '../user/user.model';
+import { AuthService } from './auth.service';
 
 dotenv.config();
 
 export class AuthController {
     async register(req: Request, res: Response) {
         try {
-            const model = new User(req.body);
-            const user = await model.save();
-            const obj = { id: user._id, email: user.email };
-            const token = jwt.sign(obj, process.env.SECRATE_KEY || '', {
-                expiresIn: 3600
-            });
-
-            res.send({
-                id: user._id,
-                email: user.email,
-                name: user.name,
-                role: user.role,
-                token: token
-            });
+            const authService = new AuthService();
+            const result = await authService.register(req.body);
+            res.json(result);
         } catch (error) {
             res.send(error);
         }
@@ -29,29 +17,14 @@ export class AuthController {
 
     async login(req: Request, res: Response) {
         try {
-            const obj = {
-                email: req.body.email,
-                password: req.body.password,
+            let obj = {
+                ...req.body,
                 status: true
             }
-
-            const user = await User.findOne(obj);
-            if (user == null) {
-                res.status(401).send("Username & password is not Valid")
-            } else {
-                const obj = { id: user._id, email: user.email };
-                const token = jwt.sign(obj, process.env.SECRATE_KEY || '', {
-                    expiresIn: 3600
-                });
-
-                res.json({
-                    id: user._id,
-                    email: user.email,
-                    name: user.name,
-                    role: user.role,
-                    token: token
-                });
-            }
+            
+            const authService = new AuthService();
+            const result = await authService.login(obj);
+            res.json(result);
         } catch (error) {
             res.send(error);
         }
