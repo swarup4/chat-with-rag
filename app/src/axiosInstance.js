@@ -10,7 +10,6 @@ axiosInstance.interceptors.request.use(
     (config) => {
         const token = JSON.parse(sessionStorage.user)?.token;
         if (token) {
-            console.log('Adding token to request headers:', token);
             config.headers['Authorization'] = token;
         }
         return config;

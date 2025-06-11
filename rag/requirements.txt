@@ -10,6 +10,6 @@ langchain-community
 langchain-huggingface
 langchain-mongodb
 langchain-core
-langchain-embeddings
 docx2txt
 pypdf
+langchain-text-splitters

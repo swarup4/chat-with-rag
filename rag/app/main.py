@@ -7,9 +7,6 @@ app = Flask(__name__)
 CORS(app)
 rag_service = RAGService()
 
-@app.route("/", methods=["GET"])
-def hello():
-    return "Hello Flask"
 
 @app.route("/ingest", methods=["POST"])
 def ingest():
