@@ -30,4 +30,21 @@ export class UserController {
             res.status(500).send('Server error');
         }
     }
+
+    async deleteUser(req: Request, res: Response) {
+        try {
+            const userService = new UserService();
+            const user = await userService.deleteUser(req.params.id);
+            if (!user) {
+                res.status(404).json({ message: 'User not found' });
+            }
+            res.status(200).json({
+                success: true,
+                message: 'User deleted successfully',
+                user: user,
+            });
+        } catch (error) {
+            res.status(500).send('Server error');
+        }
+    }
 }

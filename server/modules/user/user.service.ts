@@ -9,4 +9,10 @@ export class UserService {
         const user = await User.findById(id);
         return user;
     }
+
+    async deleteUser(id: string): Promise<any> {
+        const user = await User.findByIdAndUpdate(id, { status: false });
+        return user;
+    }
+    
 }

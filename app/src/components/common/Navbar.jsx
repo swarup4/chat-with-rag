@@ -31,11 +31,17 @@ export default function Navbar({ user }) {
         <nav className="bg-cyan-700 text-white px-6 py-3 flex items-center justify-between">
             
             <div className="flex items-center gap-2">
-                <Link to="/" className="flex items-center gap-2 font-bold text-lg">
-                    
-                    <span className="bg-white rounded-full w-8 h-8 flex items-center justify-center text-cyan-700 font-extrabold text-xl">G</span>
-                    <span>GenAI App</span>
-                </Link>
+                {user && user.role === 'admin' ? (
+                    <Link to="/admin" className="flex items-center gap-2 font-bold text-lg">
+                        <span className="bg-white rounded-full w-8 h-8 flex items-center justify-center text-cyan-700 font-extrabold text-xl">G</span>
+                        <span>GenAI App</span>
+                    </Link>
+                ) : (
+                    <Link to="/dashboard" className="flex items-center gap-2 font-bold text-lg">
+                        <span className="bg-white rounded-full w-8 h-8 flex items-center justify-center text-cyan-700 font-extrabold text-xl">G</span>
+                        <span>GenAI App</span>
+                    </Link>
+                )}
             </div>
             
             <div className="relative flex items-center" ref={dropdownRef}>

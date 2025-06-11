@@ -16,6 +16,24 @@ This project is organized into three main folders:
 
 ---
 
+## .env Configuration
+
+### 1. Python RAG API (`rag/.env`)
+```bash
+HUGGINGFACEHUB_ACCESS_TOKEN = ""
+MONGODB_ATLAS_CLUSTER_URI='mongodb+srv://admin:*****@*****.32bo0b5.mongodb.net'
+```
+
+### 2. Node.js API (`server/.env`)
+```bash
+PORT=3001
+SECRATE_KEY='ragsecret'
+MONGODB_URI='mongodb+srv://admin:*****@*****.32bo0b5.mongodb.net'
+MONGODB_DB_NAME=llm
+```
+
+---
+
 ## How to Run Each Service
 
 ### 1. React App (`app/`)

@@ -1,2 +1,2 @@
 export const HOST_URL = 'http://localhost:3001'
-export const RAG_URL = 'http://127.0.0.1:6000'
+export const RAG_URL = 'http://127.0.0.1:8080'

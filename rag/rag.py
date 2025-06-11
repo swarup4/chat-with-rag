@@ -10,7 +10,7 @@ from langchain_huggingface import HuggingFaceEndpoint
 from langchain.memory import ConversationBufferMemory
 from langchain.chains import ConversationalRetrievalChain
 
-# --- Configuration and Setup ---
+# Config
 def load_config():
     load_dotenv()
     return {
@@ -22,7 +22,7 @@ def load_config():
         "PDF_PATH": "./Trip/Thailand",
     }
 
-# --- Data Loading and Chunking ---
+# Data Loading and Chunking
 def load_and_chunk_pdfs(pdf_path):
     loader = PyPDFDirectoryLoader(
         path=pdf_path,
@@ -41,7 +41,7 @@ def load_and_chunk_pdfs(pdf_path):
     )
     return splitter.create_documents(texts=[text])
 
-# --- Vector Store Setup ---
+# Vector Store
 def setup_vector_store(config, embedding, chunk):
     client = MongoClient(config["MONGODB_ATLAS_CLUSTER_URI"])
     collection = client[config["DB_NAME"]][config["COLLECTION_NAME"]]
@@ -55,7 +55,7 @@ def setup_vector_store(config, embedding, chunk):
     vector_store.add_documents(chunk)
     return vector_store
 
-# --- Conversation Chain Setup ---
+# Conversation Chain implementation
 def setup_conversation_chain(llm, retriever):
     memory = ConversationBufferMemory(
         memory_key="chat_history",
@@ -86,7 +86,7 @@ def setup_conversation_chain(llm, retriever):
         rephrase_question=True,
     )
 
-# --- Main Chat Loop ---
+# Chat Loop
 def chat_loop(conversation_chain):
     print("\nWelcome to the Travel Assistant! Type 'exit' to quit.\n")
     while True:
@@ -97,7 +97,7 @@ def chat_loop(conversation_chain):
         result = conversation_chain({"question": user_input})
         print("Assistant:", result["answer"])
 
-# --- Main Execution ---
+
 if __name__ == "__main__":
     config = load_config()
     embedding = FastEmbedEmbeddings()

@@ -109,10 +109,4 @@ class RAGService:
     def answer_question(self, question: str):
         chain = self.get_chain()
         result = chain({"question": question})
-        return result["answer"] 
-        # answer = result["answer"]
-        # # Remove unwanted prefixes and whitespace
-        # for prefix in ["Transcript:", "Answer:"]:
-        #     if answer.strip().startswith(prefix):
-        #         answer = answer.strip()[len(prefix):]
-        # return answer.strip() 
+        return result["answer"]

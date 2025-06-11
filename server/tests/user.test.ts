@@ -57,4 +57,26 @@ describe('UserController', () => {
             expect(res.json).toHaveBeenCalledWith({ message: 'User not found' });
         });
     });
+
+
+    describe('deleteUser', () => {
+        it('should soft delete a user (update status)', async () => {
+            req.params = { id: 'user123' };
+            const updatedUser = { _id: 'user123', name: 'User', status: 'inactive' };
+            (User.findByIdAndUpdate as jest.Mock).mockResolvedValue(updatedUser);
+
+            await controller.deleteUser(req, res);
+
+            expect(User.findByIdAndUpdate).toHaveBeenCalledWith(
+                'user123',
+                { status: false }
+            );
+            expect(res.status).toHaveBeenCalledWith(200);
+            expect(res.json).toHaveBeenCalledWith({
+                success: true,
+                message: 'User deleted successfully',
+                user: updatedUser,
+            });
+        });
+    });
 });
