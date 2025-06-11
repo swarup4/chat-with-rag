@@ -3,14 +3,6 @@ import { Outlet } from 'react-router-dom';
 import Navbar from './Navbar';
 import Sidebar from './Sidebar';
 
-function Footer() {
-    return (
-        <footer className="bg-cyan-700 text-white text-center py-2 mt-8">
-            &copy; {new Date().getFullYear()} GenAI App. All rights reserved.
-        </footer>
-    );
-}
-
 export default function Layout({ user, sidebarLinks }) {
 
     return (
@@ -22,7 +14,6 @@ export default function Layout({ user, sidebarLinks }) {
                     <Outlet />
                 </main>
             </div>
-            <Footer />
         </div>
     );
 }
