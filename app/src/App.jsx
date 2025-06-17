@@ -3,6 +3,7 @@ import Login from './pages/Login';
 import Signup from './pages/Signup';
 import AdminDashboard from './pages/AdminDashboard';
 import UserList from './components/admin/UserList';
+import UserEdit from './components/admin/UserEdit';
 import RoleAssign from './components/admin/RoleAssign';
 import DocumentManagement from './pages/DocumentManagement';
 import QAPage from './pages/QAPage';
@@ -45,6 +46,9 @@ function App() {
                 }, {
                     path: 'users',
                     element: <UserList />,
+                }, {
+                    path: 'userEdit/:id',
+                    element: <UserEdit />,
                 }, {
                     path: 'roles',
                     element: <RoleAssign />,

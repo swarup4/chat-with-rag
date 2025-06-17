@@ -14,5 +14,10 @@ export class UserService {
         const user = await User.findByIdAndUpdate(id, { status: false });
         return user;
     }
+
+    async updateUser(id: string, user: any): Promise<any> {
+        const updatedUser = await User.findByIdAndUpdate(id, user);
+        return updatedUser;
+    }
     
 }

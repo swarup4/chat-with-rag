@@ -1,15 +1,16 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from '../../axiosInstance';
 import { HOST_URL } from '../../constants'
 
 
 export default function UserList() {
     const [users, setUsers] = useState([]);
+    const navigate = useNavigate();
 
     useEffect(() => {
         const url = `${HOST_URL}/api/users`;
         axios.get(url).then(res => {
-            debugger
             setUsers(res.data);
         }).catch(err => {
             console.log(err)
@@ -20,6 +21,15 @@ export default function UserList() {
         const url = `${HOST_URL}/api/users/deleteUser/${id}`;
         axios.delete(url).then(res => {
             setUsers(users.filter(user => user._id !== id));
+        }).catch(err => {
+            console.log(err);
+        });
+    }
+
+    function activateUser(id) {
+        const url = `${HOST_URL}/api/users/updateUser/${id}`;
+        axios.put(url, { status: true }).then(res => {
+            setUsers(users.map(user => user._id === id ? {...user, status: true} : user));
         }).catch(err => {
             console.log(err);
         });
@@ -45,11 +55,11 @@ export default function UserList() {
                                 <td className="px-4 py-2 text-center border-b">{user.email}</td>
                                 <td className="px-4 py-2 text-center border-b">{user.role}</td>
                                 <td className="px-4 py-2 text-center border-b">
-
-                                    {user.status == true ? (
+                                    <button onClick={() => navigate(`/admin/userEdit/${user._id}`)} className="text-cyan-600 hover:underline ml-2">Edit</button> &nbsp;
+                                    {user.status === true ? (
                                         <button onClick={() => deleteUser(user._id)} className="text-red-600 hover:underline">Delete</button>
                                     ) : (
-                                        <button className="text-cyan-600 hover:underline ml-2">Inactive</button>
+                                        <button onClick={() => activateUser(user._id)} className="text-cyan-600 hover:underline ml-2">Active</button>
                                     )}
                                 </td>
                             </tr>

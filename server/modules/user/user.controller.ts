@@ -31,6 +31,16 @@ export class UserController {
         }
     }
 
+    async updateUser(req: Request, res: Response) {
+        try {
+            const userService = new UserService();
+            const user = await userService.updateUser(req.params.id, req.body);
+            res.status(200).json(user);
+        } catch (error) {
+            res.status(500).send('Server error');
+        }
+    }
+
     async deleteUser(req: Request, res: Response) {
         try {
             const userService = new UserService();

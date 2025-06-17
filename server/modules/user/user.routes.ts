@@ -8,6 +8,7 @@ class UserRoutes {
     constructor() {
         this.router.get('/', this.controller.getAllUsers);
         this.router.get('/getUser/:id', this.controller.getUsers);
+        this.router.put('/updateUser/:id', this.controller.updateUser);
         this.router.delete('/deleteUser/:id', this.controller.deleteUser);
     }
 }
