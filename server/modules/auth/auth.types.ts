@@ -12,3 +12,8 @@ export interface LoginPayload {
     password: string;
     status: boolean;
 }
+
+export interface IAuthService {
+    register(userData: RegisterPayload): Promise<any>;
+    login(userData: LoginPayload): Promise<any>;
+}

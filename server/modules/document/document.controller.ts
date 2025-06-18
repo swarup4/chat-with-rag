@@ -1,11 +1,16 @@
 import { Request, Response } from 'express';
-import { DocumentService } from './document.service';
+import { IDocumentService } from './document.types';
 
 export class DocumentController {
+    private documentService: IDocumentService;
+
+    constructor(documentService: IDocumentService) {
+        this.documentService = documentService;
+    }
+
     async getAllDocument(req: Request, res: Response) {
         try {
-            const documentService = new DocumentService();
-            const documents = await documentService.getAllDocuments();
+            const documents = await this.documentService.getAllDocuments();
             res.status(200).json(documents);
         } catch (error) {
             res.status(500).send('Server error');
@@ -15,8 +20,7 @@ export class DocumentController {
     async deleteDocument(req: Request, res: Response) {
         try {
             const id = req.params.id;
-            const documentService = new DocumentService();
-            const result = await documentService.deleteDocument(id);
+            const result = await this.documentService.deleteDocument(id);
             res.status(200).json(result);
         } catch (error) {
             res.status(500).send('Server error');

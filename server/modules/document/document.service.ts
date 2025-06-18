@@ -1,6 +1,7 @@
 import { DocumentModel, VectorModel } from './document.model';
+import { IDocumentService } from './document.types';
 
-export class DocumentService {
+export class DocumentService implements IDocumentService {
     async getAllDocuments(): Promise<any> {
         const documents = await DocumentModel.find({});
         return documents;

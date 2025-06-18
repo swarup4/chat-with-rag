@@ -1,12 +1,17 @@
 import { Request, Response } from 'express';
 import { UserService } from './user.service';
+import { IUserService } from './user.types';
 
 export class UserController {
-    
+    private userService: IUserService;
+
+    constructor(userService: IUserService) {
+        this.userService = userService;
+    }
+
     async getAllUsers(req: Request, res: Response) {
         try {
-            const userService = new UserService();
-            const users = await userService.getAllUsers();
+            const users = await this.userService.getAllUsers();
             res.status(200).json(users);
         } catch (error) {
             res.status(500).send('Server error');
@@ -15,8 +20,7 @@ export class UserController {
 
     async getUsers(req: Request, res: Response) {
         try {
-            const userService = new UserService();
-            const user = await userService.getUserById(req.params.id);
+            const user = await this.userService.getUserById(req.params.id);
             if (!user) {
                 res.status(404).json({ message: 'User not found' });
             }
@@ -33,8 +37,7 @@ export class UserController {
 
     async updateUser(req: Request, res: Response) {
         try {
-            const userService = new UserService();
-            const user = await userService.updateUser(req.params.id, req.body);
+            const user = await this.userService.updateUser(req.params.id, req.body);
             res.status(200).json(user);
         } catch (error) {
             res.status(500).send('Server error');
@@ -43,8 +46,7 @@ export class UserController {
 
     async deleteUser(req: Request, res: Response) {
         try {
-            const userService = new UserService();
-            const user = await userService.deleteUser(req.params.id);
+            const user = await this.userService.deleteUser(req.params.id);
             if (!user) {
                 res.status(404).json({ message: 'User not found' });
             }

@@ -1,14 +1,19 @@
 import dotenv from 'dotenv';
 import { Request, Response } from 'express';
-import { AuthService } from './auth.service';
+import { IAuthService } from './auth.types';
 
 dotenv.config();
 
 export class AuthController {
+    private authService: IAuthService;
+
+    constructor(authService: IAuthService) {
+        this.authService = authService;
+    }
+
     async register(req: Request, res: Response) {
         try {
-            const authService = new AuthService();
-            const result = await authService.register(req.body);
+            const result = await this.authService.register(req.body);
             const { user, token } = result;
             res.status(200).json({
                 id: user._id,
@@ -29,8 +34,7 @@ export class AuthController {
                 status: true
             }
             
-            const authService = new AuthService();
-            const result = await authService.login(obj);
+            const result = await this.authService.login(obj);
             const { user, token } = result;
             
             res.status(200).json({

@@ -1,6 +1,7 @@
 import User from './user.model';
+import { IUserService } from './user.types';
 
-export class UserService {
+export class UserService implements IUserService {
     async getAllUsers(): Promise<any[]> {
         return await User.find({});
     }
@@ -19,5 +20,4 @@ export class UserService {
         const updatedUser = await User.findByIdAndUpdate(id, user);
         return updatedUser;
     }
-    
 }

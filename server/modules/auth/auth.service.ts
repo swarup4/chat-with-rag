@@ -1,9 +1,9 @@
 import dotenv from 'dotenv';
 import jwt from 'jsonwebtoken';
-import { RegisterPayload, LoginPayload } from "./auth.types";
+import { RegisterPayload, LoginPayload, IAuthService } from "./auth.types";
 import User from '../user/user.model';
 
-export class AuthService {
+export class AuthService implements IAuthService {
     async register(userData: RegisterPayload): Promise<any>  {
         try {
             const model = new User(userData);

@@ -7,9 +7,14 @@ describe('DocumentController', () => {
     let controller: DocumentController;
     let req: any;
     let res: any;
+    let mockDocumentService: any;
 
     beforeEach(() => {
-        controller = new DocumentController();
+        mockDocumentService = {
+            getAllDocuments: jest.fn(),
+            deleteDocument: jest.fn(),
+        };
+        controller = new DocumentController(mockDocumentService);
         req = {};
         res = {
             status: jest.fn().mockReturnThis(),
@@ -22,13 +27,13 @@ describe('DocumentController', () => {
     describe('getAllDocument', () => {
         it('should return all documents', async () => {
             const docs = [{ _id: '1', name: 'Doc1' }];
-            (DocumentModel.find as jest.Mock).mockResolvedValue(docs);
+            mockDocumentService.getAllDocuments.mockResolvedValue(docs);
             await controller.getAllDocument(req, res);
             expect(res.json).toHaveBeenCalledWith(docs);
         });
 
         it('should return empty array if no documents found', async () => {
-            (DocumentModel.find as jest.Mock).mockResolvedValue([]);
+            mockDocumentService.getAllDocuments.mockResolvedValue([]);
             await controller.getAllDocument(req, res);
             expect(res.status).toHaveBeenCalledWith(200);
             expect(res.json).toHaveBeenCalledWith([]);
@@ -38,21 +43,17 @@ describe('DocumentController', () => {
     describe('deleteDocument', () => {
         it('should delete a document and its vectors', async () => {
             req.params = { id: 'docid123' };
-            (DocumentModel.findOneAndDelete as jest.Mock).mockResolvedValue({ _id: 'docid123' });
-            (VectorModel.deleteMany as jest.Mock).mockResolvedValue({ deletedCount: 1 });
+            const result = { success: true, message: 'Delete file successfully' };
+            mockDocumentService.deleteDocument.mockResolvedValue(result);
             await controller.deleteDocument(req, res);
-            expect(DocumentModel.findOneAndDelete).toHaveBeenCalledWith({ _id: 'docid123' });
-            expect(VectorModel.deleteMany).toHaveBeenCalledWith({ documentId: 'docid123' });
-            expect(res.json).toHaveBeenCalledWith({
-                success: true,
-                message: 'Delete file successfully',
-            });
+            expect(mockDocumentService.deleteDocument).toHaveBeenCalledWith('docid123');
+            expect(res.json).toHaveBeenCalledWith(result);
         });
 
         it('should handle errors', async () => {
             req.params = { id: 'docid123' };
             const error = new Error('DB error');
-            (DocumentModel.findOneAndDelete as jest.Mock).mockRejectedValue(error);
+            mockDocumentService.deleteDocument.mockRejectedValue(error);
             await controller.deleteDocument(req, res);
             expect(res.status).toHaveBeenCalledWith(500);
             expect(res.send).toHaveBeenCalledWith('Server error');

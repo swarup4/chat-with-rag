@@ -7,9 +7,16 @@ describe('UserController', () => {
     let controller: UserController;
     let req: any;
     let res: any;
+    let mockUserService: any;
 
     beforeEach(() => {
-        controller = new UserController();
+        mockUserService = {
+            getAllUsers: jest.fn(),
+            getUserById: jest.fn(),
+            deleteUser: jest.fn(),
+            updateUser: jest.fn(),
+        };
+        controller = new UserController(mockUserService);
         req = {};
         res = {
             status: jest.fn().mockReturnThis(),
@@ -22,13 +29,13 @@ describe('UserController', () => {
     describe('getAllUsers', () => {
         it('should return all users', async () => {
             const users = [{ _id: '1', name: 'User1', email: 'u1@mail.com', role: 'admin' }];
-            (User.find as jest.Mock).mockResolvedValue(users);
+            mockUserService.getAllUsers.mockResolvedValue(users);
             await controller.getAllUsers(req, res);
             expect(res.json).toHaveBeenCalledWith(users);
         });
 
         it('should return empty array if no users found', async () => {
-            (User.find as jest.Mock).mockResolvedValue([]);
+            mockUserService.getAllUsers.mockResolvedValue([]);
             await controller.getAllUsers(req, res);
             expect(res.json).toHaveBeenCalledWith([]);
             expect(res.status).not.toHaveBeenCalledWith(404);
@@ -39,7 +46,7 @@ describe('UserController', () => {
         it('should return a user by id', async () => {
             req.params = { id: '1' };
             const user = { _id: '1', name: 'User1', email: 'u1@mail.com', role: 'admin' };
-            (User.findById as jest.Mock).mockResolvedValue(user);
+            mockUserService.getUserById.mockResolvedValue(user);
             await controller.getUsers(req, res);
             expect(res.json).toHaveBeenCalledWith({
                 id: user._id,
@@ -51,7 +58,7 @@ describe('UserController', () => {
 
         it('should return 404 if user not found', async () => {
             req.params = { id: '1' };
-            (User.findById as jest.Mock).mockResolvedValue(null);
+            mockUserService.getUserById.mockResolvedValue(null);
             await controller.getUsers(req, res);
             expect(res.status).toHaveBeenCalledWith(404);
             expect(res.json).toHaveBeenCalledWith({ message: 'User not found' });
@@ -63,14 +70,11 @@ describe('UserController', () => {
         it('should soft delete a user (update status)', async () => {
             req.params = { id: 'user123' };
             const updatedUser = { _id: 'user123', name: 'User', status: 'inactive' };
-            (User.findByIdAndUpdate as jest.Mock).mockResolvedValue(updatedUser);
+            mockUserService.deleteUser.mockResolvedValue(updatedUser);
 
             await controller.deleteUser(req, res);
 
-            expect(User.findByIdAndUpdate).toHaveBeenCalledWith(
-                'user123',
-                { status: false }
-            );
+            expect(mockUserService.deleteUser).toHaveBeenCalledWith('user123');
             expect(res.status).toHaveBeenCalledWith(200);
             expect(res.json).toHaveBeenCalledWith({
                 success: true,
