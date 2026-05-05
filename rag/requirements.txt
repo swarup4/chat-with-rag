@@ -3,6 +3,8 @@ flask-cors
 pymongo
 fastembed
 langchain
+langchain-classic
+langchain-openai
 python-dotenv
 pydantic
 pytest
@@ -14,3 +16,4 @@ langchain-core
 docx2txt
 pypdf
 langchain-text-splitters
+tf-keras
