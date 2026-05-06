@@ -1,0 +1,120 @@
+{
+  "info": {
+    "name": "RAG API",
+    "description": "FastAPI RAG service: PDF ingestion, conversational QA over Azure OpenAI + MongoDB Atlas Vector Search.\n\n**Setup once per environment:**\n1. Start the server: `uvicorn app.main:app --host 0.0.0.0 --port 8080`\n2. Run `Init Vector Index` once.\n3. Upload PDFs via `Ingest PDFs`.\n4. Ask questions via `Ask a Question`. Reuse the same `session_id` for multi-turn memory.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8000",
+      "type": "string"
+    },
+    {
+      "key": "session_id",
+      "value": "user-42",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health / Root",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/",
+          "host": ["{{baseUrl}}"],
+          "path": [""]
+        },
+        "description": "Welcome message. Use this to confirm the API is reachable."
+      },
+      "response": []
+    },
+    {
+      "name": "Init Vector Index (one-time)",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/init",
+          "host": ["{{baseUrl}}"],
+          "path": ["init"]
+        },
+        "description": "Create the MongoDB Atlas vector search index for embeddings (1536 dimensions, cosine similarity).\n\nRun ONCE per Mongo environment. Idempotent — safe to call again; subsequent calls no-op if the index already exists."
+      },
+      "response": []
+    },
+    {
+      "name": "Ingest PDFs",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/ingest",
+          "host": ["{{baseUrl}}"],
+          "path": ["ingest"]
+        },
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "files",
+              "type": "file",
+              "src": [],
+              "description": "PDF file to ingest. Click the value field and select your PDF. To upload multiple files, duplicate this row (same key 'files') and pick another file."
+            }
+          ]
+        },
+        "description": "Upload one or more PDFs. Each file is loaded, chunked (500 chars, 50 overlap), embedded via Azure OpenAI, and indexed in MongoDB Atlas.\n\nResponse:\n```json\n{\n  \"status\": \"Ingestion completed\",\n  \"document_ids\": [\"654a1b2c3d4e5f6a7b8c9d0e\"]\n}\n```"
+      },
+      "response": []
+    },
+    {
+      "name": "Ask a Question",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/qa",
+          "host": ["{{baseUrl}}"],
+          "path": ["qa"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"question\": \"What is the best time to visit Phuket?\",\n    \"session_id\": \"{{session_id}}\"\n}"
+        },
+        "description": "Ask a question grounded in the ingested PDFs.\n\n**`session_id` keeps multi-turn memory** — reuse the same value across requests so the assistant remembers earlier turns. Use a different `session_id` per user/conversation.\n\nResponse:\n```json\n{\n  \"answer\": \"The best time to visit Phuket is from November to April...\"\n}\n```"
+      },
+      "response": []
+    },
+    {
+      "name": "Ask a Follow-up (same session)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/qa",
+          "host": ["{{baseUrl}}"],
+          "path": ["qa"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"question\": \"What about the food there?\",\n    \"session_id\": \"{{session_id}}\"\n}"
+        },
+        "description": "Demonstrates conversational memory. Run this AFTER 'Ask a Question' with the same `session_id`. The assistant should resolve 'there' to whatever location was discussed previously."
+      },
+      "response": []
+    }
+  ]
+}
