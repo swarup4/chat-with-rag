@@ -1,8 +1,6 @@
 import asyncio
-import datetime
 import os
 from collections import defaultdict
-from typing import Any
 
 from langchain_classic.chains import create_history_aware_retriever, create_retrieval_chain
 from langchain_classic.chains.combine_documents import create_stuff_documents_chain
@@ -13,7 +11,8 @@ from langchain_mongodb import MongoDBAtlasVectorSearch
 from langchain_openai import AzureChatOpenAI, AzureOpenAIEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
-from app.db import documents_collection, embeddings_collection
+from app.db import embeddings_collection
+from app.models import Embedding, IngestedDocument
 from app.utils import load_pdf, save_temp_pdf
 
 
@@ -103,22 +102,22 @@ class RAGService:
 
 
     async def ingest(self, filename: str, contents: bytes) -> str:
-        chunks, doc_id = await asyncio.to_thread(self._prepare_chunks, filename, contents)
-        await self.vector_store.aadd_documents(chunks)
-        return doc_id
+        chunks = await asyncio.to_thread(self._load_and_chunk, contents)
+        if not chunks:
+            return ""
 
+        doc = await IngestedDocument(name=filename).insert()
 
-    def _prepare_chunks(self, filename: str, contents: bytes) -> tuple[list[Any], str]:
-        chunks = self.SPLITTER.split_documents(load_pdf(save_temp_pdf(contents)))
-        now = datetime.datetime.now(datetime.UTC)
-        doc_id = str(
-            documents_collection.insert_one(
-                {"name": filename, "createdAt": now, "updatedAt": now}
-            ).inserted_id
-        )
-        for chunk in chunks:
-            chunk.metadata["documentId"] = doc_id
-        return chunks, doc_id
+        texts = [c.page_content for c in chunks]
+        vectors = await self.embedding.aembed_documents(texts)
+        await Embedding.insert_many([
+            Embedding(text=text, embedding=vec, documentId=doc.id)
+            for text, vec in zip(texts, vectors)
+        ])
+        return str(doc.id)
+
+    def _load_and_chunk(self, contents: bytes) -> list:
+        return self.SPLITTER.split_documents(load_pdf(save_temp_pdf(contents)))
     
 
     async def answer(self, question: str, session_id: str) -> str:

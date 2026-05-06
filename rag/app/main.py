@@ -5,6 +5,7 @@ from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
+from app.db import init_db
 from app.rag_service import RAGService
 
 
@@ -28,6 +29,7 @@ class StatusResponse(BaseModel):
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    await init_db()
     app.state.rag = RAGService()
     yield
 
