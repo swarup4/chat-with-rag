@@ -7,18 +7,20 @@ from langchain_core.chat_history import BaseChatMessageHistory
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.runnables.history import RunnableWithMessageHistory
 from langchain_mongodb import MongoDBAtlasVectorSearch, MongoDBChatMessageHistory
-from langchain_openai import AzureChatOpenAI, AzureOpenAIEmbeddings
+from langchain_openai import AzureChatOpenAI
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 from app.db import DB_NAME, embeddings_collection, sync_client
+from app.embeddings import VoyageContextualEmbeddings
 from app.models import Embedding, IngestedDocument
 from app.utils import load_pdf, save_temp_pdf
 
 
 class RAGService:
     VECTOR_INDEX_NAME = os.getenv("VECTOR_INDEX_NAME", "vector-stores-index")
-    EMBEDDING_DIMENSIONS = int(os.getenv("EMBEDDING_DIMENSIONS", "1536"))
+    EMBEDDING_DIMENSIONS = int(os.getenv("EMBEDDING_DIMENSIONS", "1024"))
     CHAT_HISTORY_COLLECTION = os.getenv("CHAT_HISTORY_COLLECTION", "chat_history")
+    VOYAGE_EMBEDDING_MODEL = os.getenv("VOYAGE_EMBEDDING_MODEL", "voyage-context-3")
 
     CONTEXTUALIZE_SYSTEM = (
         "Given the chat history and the latest user question, rephrase the "
@@ -40,12 +42,9 @@ class RAGService:
     )
 
     def __init__(self) -> None:
-        self.embedding = AzureOpenAIEmbeddings(
-            azure_endpoint=os.getenv("AZURE_OPENAI_EMBEDDING_ENDPOINT"),
-            api_key=os.getenv("AZURE_OPENAI_EMBEDDING_API_KEY"),
-            api_version=os.getenv("AZURE_OPENAI_EMBEDDING_API_VERSION"),
-            azure_deployment=os.getenv("AZURE_OPENAI_EMBEDDING_DEPLOYMENT_NAME"),
-            dimensions=self.EMBEDDING_DIMENSIONS,
+        self.embedding = VoyageContextualEmbeddings(
+            model=self.VOYAGE_EMBEDDING_MODEL,
+            output_dimension=self.EMBEDDING_DIMENSIONS,
         )
         self.llm = AzureChatOpenAI(
             azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),

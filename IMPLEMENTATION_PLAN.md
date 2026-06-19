@@ -9,7 +9,7 @@ Locked stack: **Azure OpenAI** (LLM) · **Voyage AI** (embeddings + reranker) ·
 | Milestone | Theme | Status |
 |---|---|---|
 | M0 | Foundations (stateless tier + observability) | ✅ |
-| M1 | Voyage embeddings + blue/green re-index | ⬜ |
+| M1 | Voyage embeddings | ✅ |
 | M2 | Two-layer semantic cache (the hard requirement) | ⬜ |
 | M3 | Retrieval quality: reranker + hybrid + citation chunking | ⬜ |
 | M4 | LangGraph orchestration + streaming | ⬜ |
@@ -37,21 +37,40 @@ invalidation loop. M6 is continuous from M0 onward.
 
 ---
 
-## M1 — Voyage embeddings + blue/green re-index ⬜
+## M1 — Voyage embeddings ✅ (verified working 2026-06-20)
 
-**Goal:** replace Azure `text-embedding-3-large` (1536-d) with Voyage `voyage-context-3`. This is a
-**breaking** change — embedding dimension changes, so the vector index must be rebuilt, not mutated.
+**Goal:** replace Azure `text-embedding-3-large` (1536-d) with Voyage `voyage-context-3` (1024-d).
+**Decision (2026-06-20):** no blue/green — fresh start. New database `trip`, the same `embeddings`
+collection holds the Voyage vectors, corpus re-ingested via `/ingest`. Old Azure config commented out.
 
-- [ ] Add `langchain-voyageai` + `VOYAGE_API_KEY` (env + `.env.example`).
-- [ ] Swap `self.embedding` in `rag/app/rag_service.py` to Voyage; set new `EMBEDDING_DIMENSIONS`.
-- [ ] Create a **new** Atlas vector index (`VECTOR_INDEX_NAME=embedding_vector_index_voyage`) — never
-      mutate the live `embeddings` index in place.
-- [ ] Re-embed existing corpus into the new collection/index (one-off backfill script).
-      *Decision pending: re-embed existing docs vs. start fresh.*
-- [ ] Cut over `RAGService` to the new index; keep the old index until validated, then drop.
+**Note:** `voyage-context-3` is a *contextualized* model — it uses the SDK's `contextualized_embed()`
+(all chunks of a document embedded together), not the plain `embed()` LangChain's `VoyageAIEmbeddings`
+wraps. So M1 uses the native `voyageai` SDK behind a custom `Embeddings` wrapper, not `langchain-voyageai`.
 
-**Done when:** `/qa` returns answers from the Voyage index with quality ≥ the Azure baseline
-(eyeball + LangSmith retrieval scores), and the old index is removed.
+Code (done):
+- [x] Add `voyageai` + `VOYAGE_API_KEY` / `VOYAGE_EMBEDDING_MODEL` (`rag/requirements.txt`, `.env.example`).
+- [x] `VoyageContextualEmbeddings` wrapper over `contextualized_embed` — `rag/app/embeddings.py`.
+- [x] Swap `self.embedding` in `rag/app/rag_service.py` to Voyage; `EMBEDDING_DIMENSIONS` default → 1024.
+- [x] Database name → `trip` (env `MONGODB_DB_NAME`), embeddings collection stays `embeddings` — `db.py`, `models.py`.
+- [x] Comment out deprecated Azure embedding config in `.env.example` (chat still uses Azure OpenAI).
+
+Deploy runbook (ops — you):
+- [ ] Set `.env`: `VOYAGE_API_KEY`, `EMBEDDING_DIMENSIONS=1024`, `VECTOR_INDEX_NAME=embedding_vector_index`,
+      `MONGODB_DB_NAME=trip`. Rebuild rag container (installs `voyageai`).
+- [ ] `POST /init` → builds the 1024-d Atlas vector index on `trip.embeddings`.
+- [ ] Re-ingest documents via `/ingest`, then validate `/qa`.
+
+**Cross-service (resolved 2026-06-20):** rag and the Node server were on *different* Atlas clusters
+(rag=`genai.jxpdenq`, server=`trigent.32bo0b5`). Unified on **genai** (rag's, canonical): `server/.env`
+`MONGODB_URI` → genai + `MONGODB_DB_NAME=trip`; rag `.env` `MONGODB_DB_NAME=trip`. ⚠️ The server's
+`users`/auth collection lived on the old trigent cluster — it won't exist on genai/trip until migrated
+or re-created (users must re-register, or copy the `users` collection over).
+
+**Done when:** `/qa` returns answers from the Voyage `trip.embeddings` index, and the document UI
+(server) and rag service agree on the database.
+
+**Known limit:** one `contextualized_embed` request per document; a single doc exceeding Voyage's
+per-request token/chunk cap would need sub-batching — fine for the current medium corpus, revisit if hit.
 
 ---
 

@@ -1,0 +1,146 @@
+{
+  "info": {
+    "name": "chat-with-rag API",
+    "description": "All endpoints for chat-with-rag. RAG service at {{rag_url}} (:8080), Express server at {{server_url}} (:3001). Login auto-saves the JWT into {{token}}. Auth header is the RAW token (no 'Bearer ' prefix).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "rag_url", "value": "http://127.0.0.1:8080" },
+    { "key": "server_url", "value": "http://localhost:3001" },
+    { "key": "token", "value": "" },
+    { "key": "user_id", "value": "" },
+    { "key": "document_id", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "RAG service",
+      "item": [
+        {
+          "name": "Health check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{rag_url}}/", "host": ["{{rag_url}}"], "path": [""] }
+          }
+        },
+        {
+          "name": "Init vector index",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": { "raw": "{{rag_url}}/init", "host": ["{{rag_url}}"], "path": ["init"] }
+          }
+        },
+        {
+          "name": "Ingest documents",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": { "mode": "formdata", "formdata": [{ "key": "files", "type": "file", "src": [] }] },
+            "url": { "raw": "{{rag_url}}/ingest", "host": ["{{rag_url}}"], "path": ["ingest"] }
+          }
+        },
+        {
+          "name": "Ask a question (QA)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "options": { "raw": { "language": "json" } }, "raw": "{\n  \"question\": \"What is the best time to visit Paris?\",\n  \"session_id\": \"default\"\n}" },
+            "url": { "raw": "{{rag_url}}/qa", "host": ["{{rag_url}}"], "path": ["qa"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "options": { "raw": { "language": "json" } }, "raw": "{\n  \"name\": \"Test User\",\n  \"email\": \"test@example.com\",\n  \"password\": \"secret123\",\n  \"role\": \"admin\"\n}" },
+            "url": { "raw": "{{server_url}}/api/auth/register", "host": ["{{server_url}}"], "path": ["api", "auth", "register"] }
+          }
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["const j = pm.response.json();", "if (j && j.token) pm.collectionVariables.set('token', j.token);"]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "options": { "raw": { "language": "json" } }, "raw": "{\n  \"email\": \"test@example.com\",\n  \"password\": \"secret123\"\n}" },
+            "url": { "raw": "{{server_url}}/api/auth/login", "host": ["{{server_url}}"], "path": ["api", "auth", "login"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Get all users",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{server_url}}/api/users/", "host": ["{{server_url}}"], "path": ["api", "users", ""] }
+          }
+        },
+        {
+          "name": "Get user by id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{server_url}}/api/users/getUser/{{user_id}}", "host": ["{{server_url}}"], "path": ["api", "users", "getUser", "{{user_id}}"] }
+          }
+        },
+        {
+          "name": "Update user",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "options": { "raw": { "language": "json" } }, "raw": "{\n  \"name\": \"Updated Name\",\n  \"email\": \"updated@example.com\",\n  \"role\": \"user\",\n  \"status\": true\n}" },
+            "url": { "raw": "{{server_url}}/api/users/updateUser/{{user_id}}", "host": ["{{server_url}}"], "path": ["api", "users", "updateUser", "{{user_id}}"] }
+          }
+        },
+        {
+          "name": "Delete user",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": { "raw": "{{server_url}}/api/users/deleteUser/{{user_id}}", "host": ["{{server_url}}"], "path": ["api", "users", "deleteUser", "{{user_id}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Documents",
+      "item": [
+        {
+          "name": "Get all documents",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "{{token}}" }],
+            "url": { "raw": "{{server_url}}/api/documents/", "host": ["{{server_url}}"], "path": ["api", "documents", ""] }
+          }
+        },
+        {
+          "name": "Delete document",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "{{token}}" }],
+            "url": { "raw": "{{server_url}}/api/documents/deleteDocument/{{document_id}}", "host": ["{{server_url}}"], "path": ["api", "documents", "deleteDocument", "{{document_id}}"] }
+          }
+        }
+      ]
+    }
+  ]
+}
