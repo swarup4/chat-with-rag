@@ -1,17 +1,16 @@
 import asyncio
 import os
-from collections import defaultdict
 
 from langchain_classic.chains import create_history_aware_retriever, create_retrieval_chain
 from langchain_classic.chains.combine_documents import create_stuff_documents_chain
-from langchain_core.chat_history import InMemoryChatMessageHistory
+from langchain_core.chat_history import BaseChatMessageHistory
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.runnables.history import RunnableWithMessageHistory
-from langchain_mongodb import MongoDBAtlasVectorSearch
+from langchain_mongodb import MongoDBAtlasVectorSearch, MongoDBChatMessageHistory
 from langchain_openai import AzureChatOpenAI, AzureOpenAIEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
-from app.db import embeddings_collection
+from app.db import DB_NAME, embeddings_collection, sync_client
 from app.models import Embedding, IngestedDocument
 from app.utils import load_pdf, save_temp_pdf
 
@@ -19,6 +18,7 @@ from app.utils import load_pdf, save_temp_pdf
 class RAGService:
     VECTOR_INDEX_NAME = os.getenv("VECTOR_INDEX_NAME", "vector-stores-index")
     EMBEDDING_DIMENSIONS = int(os.getenv("EMBEDDING_DIMENSIONS", "1536"))
+    CHAT_HISTORY_COLLECTION = os.getenv("CHAT_HISTORY_COLLECTION", "chat_history")
 
     CONTEXTUALIZE_SYSTEM = (
         "Given the chat history and the latest user question, rephrase the "
@@ -60,7 +60,7 @@ class RAGService:
             relevance_score_fn="cosine",
         )
 
-        self._sessions: defaultdict[str, InMemoryChatMessageHistory] = defaultdict(InMemoryChatMessageHistory)
+        self._histories: dict[str, MongoDBChatMessageHistory] = {}
         self._chain = self._build_chain()
 
 
@@ -70,8 +70,18 @@ class RAGService:
             dimensions=self.EMBEDDING_DIMENSIONS,
         )
 
-    def _get_session_history(self, session_id: str) -> InMemoryChatMessageHistory:
-        return self._sessions[session_id]
+    def _get_session_history(self, session_id: str) -> BaseChatMessageHistory:
+        history = self._histories.get(session_id)
+        if history is None:
+            history = MongoDBChatMessageHistory(
+                connection_string=None,
+                session_id=session_id,
+                database_name=DB_NAME,
+                collection_name=self.CHAT_HISTORY_COLLECTION,
+                client=sync_client,
+            )
+            self._histories[session_id] = history
+        return history
 
     def _build_chain(self) -> RunnableWithMessageHistory:
         retriever = self.vector_store.as_retriever(
