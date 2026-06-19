@@ -10,7 +10,7 @@ Locked stack: **Azure OpenAI** (LLM) · **Voyage AI** (embeddings + reranker) ·
 |---|---|---|
 | M0 | Foundations (stateless tier + observability) | ✅ |
 | M1 | Voyage embeddings | ✅ |
-| M2 | Two-layer semantic cache (the hard requirement) | ⬜ |
+| M2 | Two-layer semantic cache (the hard requirement) | ✅ |
 | M3 | Retrieval quality: reranker + hybrid + citation chunking | ⬜ |
 | M4 | LangGraph orchestration + streaming | ⬜ |
 | M5 | Decoupled ingestion + cache invalidation | ⬜ |
@@ -74,20 +74,30 @@ per-request token/chunk cap would need sub-batching — fine for the current med
 
 ---
 
-## M2 — Two-layer semantic cache ⬜ (headline requirement)
+## M2 — Two-layer semantic cache ✅ (verified working 2026-06-20)
 
 **Goal:** similar questions never hit the LLM. Sits in front of `RAGService.answer()`.
+**Decision:** no multi-tenancy → single shared cache, no per-user scoping. Redis = user's free-tier
+managed instance (must have the Search/vector module; Redis Cloud free tier qualifies).
 
-- [ ] Stand up Redis (managed; `docker-compose` service for local).
-- [ ] **L1 exact cache:** key = hash(normalized query + session/scope), value = answer. Near-zero cost.
-- [ ] **L2 semantic cache:** embed query (Voyage), Redis vector KNN, threshold ~0.95 → return stored
-      answer on hit, no LLM. Tune threshold against LangSmith near-miss logs.
-- [ ] Write-back on miss: `{embedding, answer, doc-tags, scope, TTL}` to both layers.
-- [ ] Move session history Redis (replaces the Mongo stopgap from M0).
-- [ ] Cache-hit/miss metric surfaced in LangSmith trace metadata.
+Code (done):
+- [x] `SemanticCache` — `rag/app/cache.py`. L1 exact (normalized-query string) + L2 semantic
+      (RediSearch FLAT/COSINE KNN over Voyage query embeddings), TTL on both, doc_ids stored for M5.
+- [x] Wired into `RAGService.answer()` — cache check before the chain; write-back on miss. Returns
+      `(answer, cache_type)`. Auto-disabled when `REDIS_URI` is unset (clean before/after toggle).
+- [x] `/qa` response exposes `cached` + `cache_type` ("exact"|"semantic"|null) — `main.py`.
+- [x] `redis` + `numpy` deps; `.env.example` REDIS_URI/threshold/TTL (fixed the bad Mongo placeholder).
+- [x] Before/after test harness — `rag/scripts/test_cache.py`.
 
-**Done when:** two semantically-equivalent questions ("how much is X" / "price of X") produce exactly
-one LLM call, the second served in <100 ms, and hit ratio is visible on a dashboard.
+Verified (Redis Cloud free tier, GenAI DB):
+- [x] `REDIS_URI` wired; `scripts/check_redis.py` confirmed Search/vector module; L1+L2 hits confirmed
+      live via `scripts/inspect_cache.py` (cached Q&A present with embedding + TTL).
+- [ ] Tune `CACHE_SIMILARITY_THRESHOLD` later if semantic hits feel too loose/tight (currently 0.95).
+
+Deferred: session history → Redis (still Mongo from M0); doc-tag cache invalidation → M5.
+
+**Done when:** exact repeat + reworded question both return `cached:true` with no new LLM trace in
+LangSmith; unrelated question returns `cached:false`. (`scripts/test_cache.py` asserts this.)
 
 ---
 

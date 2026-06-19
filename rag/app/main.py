@@ -16,6 +16,8 @@ class QARequest(BaseModel):
 
 class QAResponse(BaseModel):
     answer: str
+    cached: bool = False
+    cache_type: str | None = None  # "exact" | "semantic" | None
 
 
 class IngestResponse(BaseModel):
@@ -68,8 +70,8 @@ async def ingest(files: list[UploadFile] = File(...)) -> IngestResponse:
 
 @app.post("/qa", response_model=QAResponse)
 async def qa(req: QARequest) -> QAResponse:
-    answer = await app.state.rag.answer(req.question, req.session_id)
-    return QAResponse(answer=answer)
+    answer, cache_type = await app.state.rag.answer(req.question, req.session_id)
+    return QAResponse(answer=answer, cached=cache_type is not None, cache_type=cache_type)
 
 
 if __name__ == "__main__":
