@@ -7,18 +7,23 @@ from langchain_core.chat_history import BaseChatMessageHistory
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.runnables.history import RunnableWithMessageHistory
 from langchain_mongodb import MongoDBAtlasVectorSearch, MongoDBChatMessageHistory
-from langchain_openai import AzureChatOpenAI, AzureOpenAIEmbeddings
+from langchain_openai import AzureChatOpenAI
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
+from app.cache import SemanticCache
 from app.db import DB_NAME, embeddings_collection, sync_client
+from app.embeddings import VoyageContextualEmbeddings
 from app.models import Embedding, IngestedDocument
 from app.utils import load_pdf, save_temp_pdf
 
 
 class RAGService:
     VECTOR_INDEX_NAME = os.getenv("VECTOR_INDEX_NAME", "vector-stores-index")
-    EMBEDDING_DIMENSIONS = int(os.getenv("EMBEDDING_DIMENSIONS", "1536"))
+    EMBEDDING_DIMENSIONS = int(os.getenv("EMBEDDING_DIMENSIONS", "1024"))
     CHAT_HISTORY_COLLECTION = os.getenv("CHAT_HISTORY_COLLECTION", "chat_history")
+    VOYAGE_EMBEDDING_MODEL = os.getenv("VOYAGE_EMBEDDING_MODEL", "voyage-context-3")
+    CACHE_THRESHOLD = float(os.getenv("CACHE_SIMILARITY_THRESHOLD", "0.95"))
+    CACHE_TTL_SECONDS = int(os.getenv("CACHE_TTL_SECONDS", "86400"))
 
     CONTEXTUALIZE_SYSTEM = (
         "Given the chat history and the latest user question, rephrase the "
@@ -40,12 +45,9 @@ class RAGService:
     )
 
     def __init__(self) -> None:
-        self.embedding = AzureOpenAIEmbeddings(
-            azure_endpoint=os.getenv("AZURE_OPENAI_EMBEDDING_ENDPOINT"),
-            api_key=os.getenv("AZURE_OPENAI_EMBEDDING_API_KEY"),
-            api_version=os.getenv("AZURE_OPENAI_EMBEDDING_API_VERSION"),
-            azure_deployment=os.getenv("AZURE_OPENAI_EMBEDDING_DEPLOYMENT_NAME"),
-            dimensions=self.EMBEDDING_DIMENSIONS,
+        self.embedding = VoyageContextualEmbeddings(
+            model=self.VOYAGE_EMBEDDING_MODEL,
+            output_dimension=self.EMBEDDING_DIMENSIONS,
         )
         self.llm = AzureChatOpenAI(
             azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
@@ -58,6 +60,18 @@ class RAGService:
             embedding=self.embedding,
             index_name=self.VECTOR_INDEX_NAME,
             relevance_score_fn="cosine",
+        )
+
+        redis_url = os.getenv("REDIS_URI", "")
+        self._cache: SemanticCache | None = (
+            SemanticCache(
+                redis_url,
+                dim=self.EMBEDDING_DIMENSIONS,
+                threshold=self.CACHE_THRESHOLD,
+                ttl=self.CACHE_TTL_SECONDS,
+            )
+            if redis_url.startswith(("redis://", "rediss://"))
+            else None
         )
 
         self._histories: dict[str, MongoDBChatMessageHistory] = {}
@@ -130,9 +144,27 @@ class RAGService:
         return self.SPLITTER.split_documents(load_pdf(save_temp_pdf(contents)))
     
 
-    async def answer(self, question: str, session_id: str) -> str:
+    async def answer(self, question: str, session_id: str) -> tuple[str, str | None]:
+        query_embedding: list[float] | None = None
+        if self._cache is not None:
+            query_embedding = await self.embedding.aembed_query(question)
+            hit = await self._cache.get(question, query_embedding)
+            if hit is not None:
+                answer, cache_type = hit
+                return answer, cache_type
+
         result = await self._chain.ainvoke(
             {"input": question},
             config={"configurable": {"session_id": session_id}},
         )
-        return result["answer"]
+        answer = result["answer"]
+
+        if self._cache is not None and query_embedding is not None:
+            doc_ids = [
+                str(d.metadata.get("documentId"))
+                for d in result.get("context", [])
+                if d.metadata.get("documentId") is not None
+            ]
+            await self._cache.set(question, answer, query_embedding, doc_ids)
+
+        return answer, None

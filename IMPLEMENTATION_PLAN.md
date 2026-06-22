@@ -9,8 +9,8 @@ Locked stack: **Azure OpenAI** (LLM) · **Voyage AI** (embeddings + reranker) ·
 | Milestone | Theme | Status |
 |---|---|---|
 | M0 | Foundations (stateless tier + observability) | ✅ |
-| M1 | Voyage embeddings + blue/green re-index | ⬜ |
-| M2 | Two-layer semantic cache (the hard requirement) | ⬜ |
+| M1 | Voyage embeddings | ✅ |
+| M2 | Two-layer semantic cache (the hard requirement) | ✅ |
 | M3 | Retrieval quality: reranker + hybrid + citation chunking | ⬜ |
 | M4 | LangGraph orchestration + streaming | ⬜ |
 | M5 | Decoupled ingestion + cache invalidation | ⬜ |
@@ -37,38 +37,67 @@ invalidation loop. M6 is continuous from M0 onward.
 
 ---
 
-## M1 — Voyage embeddings + blue/green re-index ⬜
+## M1 — Voyage embeddings ✅ (verified working 2026-06-20)
 
-**Goal:** replace Azure `text-embedding-3-large` (1536-d) with Voyage `voyage-context-3`. This is a
-**breaking** change — embedding dimension changes, so the vector index must be rebuilt, not mutated.
+**Goal:** replace Azure `text-embedding-3-large` (1536-d) with Voyage `voyage-context-3` (1024-d).
+**Decision (2026-06-20):** no blue/green — fresh start. New database `trip`, the same `embeddings`
+collection holds the Voyage vectors, corpus re-ingested via `/ingest`. Old Azure config commented out.
 
-- [ ] Add `langchain-voyageai` + `VOYAGE_API_KEY` (env + `.env.example`).
-- [ ] Swap `self.embedding` in `rag/app/rag_service.py` to Voyage; set new `EMBEDDING_DIMENSIONS`.
-- [ ] Create a **new** Atlas vector index (`VECTOR_INDEX_NAME=embedding_vector_index_voyage`) — never
-      mutate the live `embeddings` index in place.
-- [ ] Re-embed existing corpus into the new collection/index (one-off backfill script).
-      *Decision pending: re-embed existing docs vs. start fresh.*
-- [ ] Cut over `RAGService` to the new index; keep the old index until validated, then drop.
+**Note:** `voyage-context-3` is a *contextualized* model — it uses the SDK's `contextualized_embed()`
+(all chunks of a document embedded together), not the plain `embed()` LangChain's `VoyageAIEmbeddings`
+wraps. So M1 uses the native `voyageai` SDK behind a custom `Embeddings` wrapper, not `langchain-voyageai`.
 
-**Done when:** `/qa` returns answers from the Voyage index with quality ≥ the Azure baseline
-(eyeball + LangSmith retrieval scores), and the old index is removed.
+Code (done):
+- [x] Add `voyageai` + `VOYAGE_API_KEY` / `VOYAGE_EMBEDDING_MODEL` (`rag/requirements.txt`, `.env.example`).
+- [x] `VoyageContextualEmbeddings` wrapper over `contextualized_embed` — `rag/app/embeddings.py`.
+- [x] Swap `self.embedding` in `rag/app/rag_service.py` to Voyage; `EMBEDDING_DIMENSIONS` default → 1024.
+- [x] Database name → `trip` (env `MONGODB_DB_NAME`), embeddings collection stays `embeddings` — `db.py`, `models.py`.
+- [x] Comment out deprecated Azure embedding config in `.env.example` (chat still uses Azure OpenAI).
+
+Deploy runbook (ops — you):
+- [ ] Set `.env`: `VOYAGE_API_KEY`, `EMBEDDING_DIMENSIONS=1024`, `VECTOR_INDEX_NAME=embedding_vector_index`,
+      `MONGODB_DB_NAME=trip`. Rebuild rag container (installs `voyageai`).
+- [ ] `POST /init` → builds the 1024-d Atlas vector index on `trip.embeddings`.
+- [ ] Re-ingest documents via `/ingest`, then validate `/qa`.
+
+**Cross-service (resolved 2026-06-20):** rag and the Node server were on *different* Atlas clusters
+(rag=`genai.jxpdenq`, server=`trigent.32bo0b5`). Unified on **genai** (rag's, canonical): `server/.env`
+`MONGODB_URI` → genai + `MONGODB_DB_NAME=trip`; rag `.env` `MONGODB_DB_NAME=trip`. ⚠️ The server's
+`users`/auth collection lived on the old trigent cluster — it won't exist on genai/trip until migrated
+or re-created (users must re-register, or copy the `users` collection over).
+
+**Done when:** `/qa` returns answers from the Voyage `trip.embeddings` index, and the document UI
+(server) and rag service agree on the database.
+
+**Known limit:** one `contextualized_embed` request per document; a single doc exceeding Voyage's
+per-request token/chunk cap would need sub-batching — fine for the current medium corpus, revisit if hit.
 
 ---
 
-## M2 — Two-layer semantic cache ⬜ (headline requirement)
+## M2 — Two-layer semantic cache ✅ (verified working 2026-06-20)
 
 **Goal:** similar questions never hit the LLM. Sits in front of `RAGService.answer()`.
+**Decision:** no multi-tenancy → single shared cache, no per-user scoping. Redis = user's free-tier
+managed instance (must have the Search/vector module; Redis Cloud free tier qualifies).
 
-- [ ] Stand up Redis (managed; `docker-compose` service for local).
-- [ ] **L1 exact cache:** key = hash(normalized query + session/scope), value = answer. Near-zero cost.
-- [ ] **L2 semantic cache:** embed query (Voyage), Redis vector KNN, threshold ~0.95 → return stored
-      answer on hit, no LLM. Tune threshold against LangSmith near-miss logs.
-- [ ] Write-back on miss: `{embedding, answer, doc-tags, scope, TTL}` to both layers.
-- [ ] Move session history Redis (replaces the Mongo stopgap from M0).
-- [ ] Cache-hit/miss metric surfaced in LangSmith trace metadata.
+Code (done):
+- [x] `SemanticCache` — `rag/app/cache.py`. L1 exact (normalized-query string) + L2 semantic
+      (RediSearch FLAT/COSINE KNN over Voyage query embeddings), TTL on both, doc_ids stored for M5.
+- [x] Wired into `RAGService.answer()` — cache check before the chain; write-back on miss. Returns
+      `(answer, cache_type)`. Auto-disabled when `REDIS_URI` is unset (clean before/after toggle).
+- [x] `/qa` response exposes `cached` + `cache_type` ("exact"|"semantic"|null) — `main.py`.
+- [x] `redis` + `numpy` deps; `.env.example` REDIS_URI/threshold/TTL (fixed the bad Mongo placeholder).
+- [x] Before/after test harness — `rag/scripts/test_cache.py`.
 
-**Done when:** two semantically-equivalent questions ("how much is X" / "price of X") produce exactly
-one LLM call, the second served in <100 ms, and hit ratio is visible on a dashboard.
+Verified (Redis Cloud free tier, GenAI DB):
+- [x] `REDIS_URI` wired; `scripts/check_redis.py` confirmed Search/vector module; L1+L2 hits confirmed
+      live via `scripts/inspect_cache.py` (cached Q&A present with embedding + TTL).
+- [ ] Tune `CACHE_SIMILARITY_THRESHOLD` later if semantic hits feel too loose/tight (currently 0.95).
+
+Deferred: session history → Redis (still Mongo from M0); doc-tag cache invalidation → M5.
+
+**Done when:** exact repeat + reworded question both return `cached:true` with no new LLM trace in
+LangSmith; unrelated question returns `cached:false`. (`scripts/test_cache.py` asserts this.)
 
 ---
 

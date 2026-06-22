@@ -16,6 +16,9 @@ langchain-huggingface
 langchain-mongodb
 langchain-core
 langsmith
+voyageai
+redis
+numpy
 docx2txt
 pypdf
 langchain-text-splitters
