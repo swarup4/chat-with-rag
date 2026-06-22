@@ -3,16 +3,20 @@ import os
 
 from langchain_classic.chains import create_history_aware_retriever, create_retrieval_chain
 from langchain_classic.chains.combine_documents import create_stuff_documents_chain
+from langchain_classic.retrievers import ContextualCompressionRetriever
 from langchain_core.chat_history import BaseChatMessageHistory
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.runnables.history import RunnableWithMessageHistory
 from langchain_mongodb import MongoDBAtlasVectorSearch, MongoDBChatMessageHistory
+from langchain_mongodb.index import create_fulltext_search_index
+from langchain_mongodb.retrievers import MongoDBAtlasHybridSearchRetriever
 from langchain_openai import AzureChatOpenAI
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 from app.cache import SemanticCache
 from app.db import DB_NAME, embeddings_collection, sync_client
 from app.embeddings import VoyageContextualEmbeddings
+from app.rerank import VoyageReranker
 from app.models import Embedding, IngestedDocument
 from app.utils import load_pdf, save_temp_pdf
 
@@ -24,6 +28,10 @@ class RAGService:
     VOYAGE_EMBEDDING_MODEL = os.getenv("VOYAGE_EMBEDDING_MODEL", "voyage-context-3")
     CACHE_THRESHOLD = float(os.getenv("CACHE_SIMILARITY_THRESHOLD", "0.95"))
     CACHE_TTL_SECONDS = int(os.getenv("CACHE_TTL_SECONDS", "86400"))
+    FULLTEXT_INDEX_NAME = os.getenv("FULLTEXT_INDEX_NAME", "text_search_index")
+    RETRIEVE_K = int(os.getenv("RETRIEVE_K", "20"))
+    RERANK_TOP_N = int(os.getenv("RERANK_TOP_N", "6"))
+    VOYAGE_RERANK_MODEL = os.getenv("VOYAGE_RERANK_MODEL", "rerank-2.5")
 
     CONTEXTUALIZE_SYSTEM = (
         "Given the chat history and the latest user question, rephrase the "
@@ -79,10 +87,21 @@ class RAGService:
 
 
     async def init_vector_store(self) -> None:
-        await asyncio.to_thread(
-            self.vector_store.create_vector_search_index,
-            dimensions=self.EMBEDDING_DIMENSIONS,
+        existing = await asyncio.to_thread(
+            lambda: [ix["name"] for ix in embeddings_collection.list_search_indexes()]
         )
+        if self.VECTOR_INDEX_NAME not in existing:
+            await asyncio.to_thread(
+                self.vector_store.create_vector_search_index,
+                dimensions=self.EMBEDDING_DIMENSIONS,
+            )
+        if self.FULLTEXT_INDEX_NAME not in existing:
+            await asyncio.to_thread(
+                create_fulltext_search_index,
+                collection=embeddings_collection,
+                index_name=self.FULLTEXT_INDEX_NAME,
+                field="text",
+            )
 
     def _get_session_history(self, session_id: str) -> BaseChatMessageHistory:
         history = self._histories.get(session_id)
@@ -98,9 +117,16 @@ class RAGService:
         return history
 
     def _build_chain(self) -> RunnableWithMessageHistory:
-        retriever = self.vector_store.as_retriever(
-            search_type="similarity",
-            search_kwargs={"k": 4},
+        hybrid = MongoDBAtlasHybridSearchRetriever(
+            vectorstore=self.vector_store,
+            search_index_name=self.FULLTEXT_INDEX_NAME,
+            k=self.RETRIEVE_K,
+        )
+        retriever = ContextualCompressionRetriever(
+            base_compressor=VoyageReranker(
+                model=self.VOYAGE_RERANK_MODEL, top_n=self.RERANK_TOP_N
+            ),
+            base_retriever=hybrid,
         )
         contextualize_prompt = ChatPromptTemplate.from_messages([
             ("system", self.CONTEXTUALIZE_SYSTEM),

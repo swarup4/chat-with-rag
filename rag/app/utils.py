@@ -11,5 +11,7 @@ def save_temp_pdf(contents: bytes) -> str:
 
 
 def load_pdf(path: str):
-    loader = PyPDFLoader(path)
+    # "layout" preserves word spacing; the default "plain" mode jams words
+    # together on some PDFs (e.g. "PATTAYABANGKOK"), wrecking retrieval + BM25.
+    loader = PyPDFLoader(path, extraction_mode="layout")
     return loader.load()

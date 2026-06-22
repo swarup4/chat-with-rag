@@ -11,7 +11,7 @@ Locked stack: **Azure OpenAI** (LLM) · **Voyage AI** (embeddings + reranker) ·
 | M0 | Foundations (stateless tier + observability) | ✅ |
 | M1 | Voyage embeddings | ✅ |
 | M2 | Two-layer semantic cache (the hard requirement) | ✅ |
-| M3 | Retrieval quality: reranker + hybrid + citation chunking | ⬜ |
+| M3 | Retrieval quality: reranker + hybrid + PDF fix | ✅ |
 | M4 | LangGraph orchestration + streaming | ⬜ |
 | M5 | Decoupled ingestion + cache invalidation | ⬜ |
 | M6 | Evaluation (Ragas) + tier scaling | ⬜ |
@@ -101,17 +101,28 @@ LangSmith; unrelated question returns `cached:false`. (`scripts/test_cache.py` a
 
 ---
 
-## M3 — Retrieval quality ⬜
+## M3 — Retrieval quality ✅ (hybrid + rerank verified 2026-06-21)
 
 **Goal:** make cached answers trustworthy (garbage cached = garbage served fast).
 
-- [ ] **Voyage reranker** (`rerank-2.5`): retrieve top-~50 → rerank to top-6–8 before generation.
-- [ ] **Hybrid search** (vector + keyword) in Atlas.
-- [ ] **Citation-aware chunking:** preserve section/heading/page metadata so answers cite precisely.
-      Extend `Embedding` model (`rag/app/models.py`) with source metadata fields.
+Done:
+- [x] **Hybrid search** (Atlas BM25 + vector, RRF) — `MongoDBAtlasHybridSearchRetriever` over a new
+      `text_search_index` fulltext index on the `text` field. `RETRIEVE_K=20` candidates.
+- [x] **Voyage reranker** (`rerank-2.5`) — custom `BaseDocumentCompressor` (`rag/app/rerank.py`) in a
+      `ContextualCompressionRetriever`, narrows 20 → `RERANK_TOP_N=6` before generation.
+- [x] **PDF-spacing fix** — `PyPDFLoader(extraction_mode="layout")` in `rag/app/utils.py` (was jamming
+      words). Applies to NEW ingests; re-ingest existing docs to benefit.
+- [x] Idempotent `init_vector_store` (creates vector + fulltext, skips existing).
+- [x] Verified: hybrid → 20 candidates → rerank → top 6, relevant chunk surfaced.
 
-**Done when:** answers include source + page citations, and Ragas context-precision/recall improve
-measurably over the M1 baseline.
+Infra note: Atlas free tier caps **3 search indexes**. Dropped the stale `llm.embeddings` vector index
+(pre-migration DB) to make room for `text_search_index`. Watch this limit before adding more indexes.
+
+Deferred:
+- [ ] **Citation-aware chunking** (section/heading/page metadata in answers) — separate enhancement.
+- [ ] Ragas measurement of the improvement → M6.
+
+**Done when:** hybrid + rerank live in the query path (✅). Citations + Ragas tracked separately.
 
 ---
 
